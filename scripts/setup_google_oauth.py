@@ -58,10 +58,22 @@ def setup_google_oauth():
         print("⚠️ GOOGLE_CLIENT_SECRET not set, skipping OAuth app setup (Site created)")
         return True  # Return True since Site was created successfully
 
-    # Check if Google provider already exists
-    try:
-        google_app = SocialApp.objects.get(provider='google')
+    # Check if Google provider already exists - handle duplicates
+    google_apps = SocialApp.objects.filter(provider='google')
 
+    if google_apps.count() > 1:
+        # Multiple apps exist - delete all but keep the first one
+        print(f"⚠️ Found {google_apps.count()} Google OAuth apps, cleaning up duplicates...")
+        first_app = google_apps.first()
+        google_apps.exclude(pk=first_app.pk).delete()
+        google_app = first_app
+        print("✅ Cleaned up duplicate OAuth apps")
+    elif google_apps.exists():
+        google_app = google_apps.first()
+    else:
+        google_app = None
+
+    if google_app:
         # Update existing app
         google_app.client_id = client_id
         google_app.secret = client_secret
@@ -73,8 +85,7 @@ def setup_google_oauth():
             google_app.sites.add(site)
 
         print(f"✅ Updated Google OAuth app (client_id: {client_id[:20]}...)")
-
-    except SocialApp.DoesNotExist:
+    else:
         # Create new Google app
         google_app = SocialApp.objects.create(
             provider='google',
