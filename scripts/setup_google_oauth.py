@@ -24,18 +24,7 @@ from allauth.socialaccount.models import SocialApp
 def setup_google_oauth():
     """Configure Google OAuth provider."""
 
-    client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
-    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
-
-    if not client_id:
-        print("⚠️ GOOGLE_CLIENT_ID not set, skipping OAuth setup")
-        return False
-
-    if not client_secret:
-        print("⚠️ GOOGLE_CLIENT_SECRET not set, skipping OAuth setup")
-        return False
-
-    # Get or create the default site
+    # ALWAYS create the Site first (required by allauth even without OAuth)
     site, site_created = Site.objects.get_or_create(
         id=1,
         defaults={
@@ -54,6 +43,20 @@ def setup_google_oauth():
             site.name = 'Alpaca Trading SaaS'
             site.save()
             print(f"✅ Updated site domain to: {site.domain}")
+        else:
+            print(f"✅ Site already exists: {site.domain}")
+
+    # Now check for OAuth credentials
+    client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
+    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
+    if not client_id:
+        print("⚠️ GOOGLE_CLIENT_ID not set, skipping OAuth app setup (Site created)")
+        return True  # Return True since Site was created successfully
+
+    if not client_secret:
+        print("⚠️ GOOGLE_CLIENT_SECRET not set, skipping OAuth app setup (Site created)")
+        return True  # Return True since Site was created successfully
 
     # Check if Google provider already exists
     try:

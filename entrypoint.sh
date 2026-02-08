@@ -24,6 +24,19 @@ python manage.py migrate --noinput || {
     echo "✅ Individual migrations completed"
 }
 
+# Create Django Site entry (required by allauth, must exist before OAuth setup)
+echo "🌐 Creating Django Site entry..."
+python manage.py shell -c "
+from django.contrib.sites.models import Site
+import os
+domain = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')[0]
+site, created = Site.objects.get_or_create(id=1, defaults={'domain': domain, 'name': 'Alpaca Trading SaaS'})
+if not created and domain and site.domain != domain:
+    site.domain = domain
+    site.save()
+print(f'Site configured: {site.domain}')
+" || echo "⚠️ Site setup skipped"
+
 # Setup Google OAuth provider in database (if GOOGLE_CLIENT_ID is set)
 if [ -n "$GOOGLE_CLIENT_ID" ]; then
     echo "🔐 Configuring Google OAuth..."
