@@ -1,0 +1,150 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+
+env:
+  GCP_PROJECT: samaanai-stg-1009-124126
+  GCP_REGION: us-west1
+  BACKEND_SERVICE: alpaca-api-staging
+  FRONTEND_SERVICE: alpaca-dashboard-staging
+
+jobs:
+  deploy-backend:
+    name: Deploy Django Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t gcr.io/$GCP_PROJECT/$BACKEND_SERVICE:${{ github.sha }} .
+          docker push gcr.io/$GCP_PROJECT/$BACKEND_SERVICE:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.BACKEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: gcr.io/${{ env.GCP_PROJECT }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }}
+          flags: |
+            --allow-unauthenticated
+            --memory=512Mi
+            --cpu=1
+            --min-instances=0
+            --max-instances=2
+            --add-cloudsql-instances=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db
+          env_vars: |
+            DJANGO_SETTINGS_MODULE=backend.settings.production
+            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            DB_USER=samaanai_backend
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=alpaca_database
+            INSTANCE_CONNECTION_NAME=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db
+            ALLOWED_HOSTS=stg.alpaca.samaanai.com,alpaca-api-staging-362270100637.us-west1.run.app
+            FRONTEND_URL=https://alpaca-dashboard-staging-362270100637.us-west1.run.app
+            CORS_ALLOWED_ORIGINS=https://alpaca-dashboard-staging-362270100637.us-west1.run.app,https://stg.alpaca.samaanai.com
+            ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+
+      - name: Show Backend URL
+        run: |
+          echo "✅ Backend deployed to: $(gcloud run services describe $BACKEND_SERVICE --region=$GCP_REGION --format='value(status.url)')"
+
+  deploy-frontend:
+    name: Deploy React Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Get Backend URL
+        id: backend-url
+        run: |
+          BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE --region=$GCP_REGION --format='value(status.url)')
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker image
+        working-directory: dashboard
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=${{ steps.backend-url.outputs.url }} \
+            -t gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }} .
+          docker push gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.FRONTEND_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: gcr.io/${{ env.GCP_PROJECT }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}
+          flags: |
+            --allow-unauthenticated
+            --memory=256Mi
+            --cpu=1
+            --min-instances=0
+            --max-instances=2
+
+      - name: Show Frontend URL
+        run: |
+          echo "✅ Frontend deployed to: $(gcloud run services describe $FRONTEND_SERVICE --region=$GCP_REGION --format='value(status.url)')"
+
+  post-deploy:
+    name: Post-Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deployment Summary
+        run: |
+          BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE --region=$GCP_REGION --format='value(status.url)')
+          FRONTEND_URL=$(gcloud run services describe $FRONTEND_SERVICE --region=$GCP_REGION --format='value(status.url)')
+
+          echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend API | $BACKEND_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Dashboard | $FRONTEND_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Visit the frontend URL to verify the deployment" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test Google OAuth login" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check \`/api/health\` endpoint on the backend" >> $GITHUB_STEP_SUMMARY

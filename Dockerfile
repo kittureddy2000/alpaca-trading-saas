@@ -30,8 +30,11 @@ RUN pip install --no-cache /wheels/*
 # Copy application code
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --settings=backend.settings.base || true
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
+
+# Collect static files (build-time, may fail without env vars - that's OK)
+RUN python manage.py collectstatic --noinput --settings=backend.settings.base 2>/dev/null || echo "Static files will be collected at runtime"
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser
@@ -41,5 +44,5 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "120", "backend.wsgi:application"]
+# Use entrypoint script for proper initialization
+ENTRYPOINT ["/app/entrypoint.sh"]

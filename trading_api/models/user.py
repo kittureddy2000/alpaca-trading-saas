@@ -61,8 +61,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
 
-    # Google OAuth
+    # Authentication tracking
+    auth_provider = models.CharField(
+        max_length=10,
+        choices=[('local', 'Local'), ('google', 'Google'), ('both', 'Both')],
+        default='local'
+    )
+    email_verified = models.BooleanField(default=False)
+    picture_url = models.URLField(max_length=500, blank=True)
+
+    # Google OAuth (legacy field for compatibility)
     google_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
 
     # Alpaca Connection (API Key approach)
@@ -138,6 +148,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             return self.subscription.live_trading_enabled
         except:
             return False
+
+    def update_last_login(self):
+        """Update last login timestamp."""
+        from django.utils import timezone
+        self.last_login = timezone.now()
+        self.save(update_fields=['last_login'])
 
 
 # Import here to avoid circular import

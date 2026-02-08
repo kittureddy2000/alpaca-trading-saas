@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     # Third party
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'allauth',
     'allauth.account',
@@ -164,6 +165,19 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+# Custom adapters for OAuth JWT redirect
+ACCOUNT_ADAPTER = 'trading_api.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'trading_api.adapters.CustomSocialAccountAdapter'
+
+# Social account settings
+SOCIALACCOUNT_STORE_TOKENS = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Login redirect URL
+LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', '/auth/callback')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
