@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (including dev deps for vite)
-RUN npm ci
+# Using npm install since package-lock.json may not exist
+RUN npm install
 
 # Copy source
 COPY . .
