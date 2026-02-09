@@ -288,5 +288,16 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        # OAuth library logging for token exchange debugging
+        'oauthlib': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'requests_oauthlib': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
