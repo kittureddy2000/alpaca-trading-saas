@@ -277,5 +277,16 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        # Add allauth logging to debug OAuth issues
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'allauth.socialaccount': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
