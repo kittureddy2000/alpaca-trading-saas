@@ -24,6 +24,13 @@ from allauth.socialaccount.models import SocialApp
 def setup_google_oauth():
     """Configure Google OAuth provider."""
 
+    # Clean up any duplicate Sites first (keep only id=1)
+    extra_sites = Site.objects.exclude(id=1)
+    if extra_sites.exists():
+        count = extra_sites.count()
+        extra_sites.delete()
+        print(f"⚠️ Deleted {count} duplicate Site(s)")
+
     # ALWAYS create the Site first (required by allauth even without OAuth)
     site, site_created = Site.objects.get_or_create(
         id=1,
@@ -80,9 +87,9 @@ def setup_google_oauth():
         google_app.name = 'Google OAuth'
         google_app.save()
 
-        # Ensure site is linked
-        if not google_app.sites.filter(id=site.id).exists():
-            google_app.sites.add(site)
+        # Clear all site links and add only Site id=1 to avoid duplicates
+        google_app.sites.clear()
+        google_app.sites.add(site)
 
         print(f"✅ Updated Google OAuth app (client_id: {client_id[:20]}...)")
     else:
