@@ -131,9 +131,8 @@ REST_FRAMEWORK = {
         # SessionAuthentication REMOVED - it interferes with JWT-only OAuth flow
         # Allauth handles sessions internally, DRF should only use JWT
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
+    # DEFAULT_PERMISSION_CLASSES REMOVED - it blocks allauth callback with 401
+    # Apply IsAuthenticated explicitly on views that need it instead
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
