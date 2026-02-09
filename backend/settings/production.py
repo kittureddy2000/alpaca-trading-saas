@@ -111,7 +111,16 @@ CSRF_TRUSTED_ORIGINS = [
     'https://api.alpaca.samaanai.com',
     'https://stg.alpaca.samaanai.com',
     'https://*.run.app',
+    'https://accounts.google.com',  # Google OAuth callback
 ]
+
+# Add additional CORS allowed origins from environment
+extra_cors = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if extra_cors:
+    for origin in extra_cors.split(','):
+        origin = origin.strip()
+        if origin and origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(origin)
 
 
 # Static files
