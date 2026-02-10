@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-Setup Django Site for allauth.
+Setup Google OAuth for allauth.
+Creates/updates SocialApp in database and links to Site.
 
-OAuth credentials are now configured in settings via SOCIALACCOUNT_PROVIDERS['google']['APP']
-This script only sets up the required Site and cleans up any old database OAuth apps.
+This is REQUIRED for allauth to work - settings-based APP config alone is NOT sufficient.
 """
 
 import os
@@ -21,19 +21,12 @@ from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
 
 
-def setup_site():
-    """Configure Django Site for allauth."""
+def setup_google_oauth():
+    """Configure Google OAuth with database SocialApp linked to Site."""
+    print("🔐 Setting up Google OAuth...")
 
-    # Clean up any duplicate Sites first (keep only id=1)
-    extra_sites = Site.objects.exclude(id=1)
-    if extra_sites.exists():
-        count = extra_sites.count()
-        extra_sites.delete()
-        print(f"⚠️ Deleted {count} duplicate Site(s)")
-
-    # Get the Cloud Run service URL from ALLOWED_HOSTS
+    # 1. Get site domain from ALLOWED_HOSTS
     allowed_hosts = os.environ.get('ALLOWED_HOSTS', '').split(',')
-    # Find the first .run.app domain or use the first host
     site_domain = 'localhost'
     for host in allowed_hosts:
         host = host.strip()
@@ -42,52 +35,82 @@ def setup_site():
             if '.run.app' in host:
                 break  # Prefer Cloud Run URL
 
-    # ALWAYS create the Site first (required by allauth)
-    site, site_created = Site.objects.get_or_create(
+    # 2. Clean up duplicate Sites (keep only id=1)
+    extra_sites = Site.objects.exclude(id=1)
+    if extra_sites.exists():
+        count = extra_sites.count()
+        extra_sites.delete()
+        print(f"⚠️ Deleted {count} duplicate Site(s)")
+
+    # 3. Setup Site (id=1 required by allauth)
+    site, created = Site.objects.get_or_create(
         id=1,
-        defaults={
-            'domain': site_domain,
-            'name': 'Alpaca Trading SaaS'
-        }
+        defaults={'domain': site_domain, 'name': 'Alpaca Trading SaaS'}
     )
-
-    if site_created:
-        print(f"✅ Created site: {site.domain}")
+    if created:
+        print(f"✅ Created Site: {site.domain}")
+    elif site.domain != site_domain:
+        site.domain = site_domain
+        site.name = 'Alpaca Trading SaaS'
+        site.save()
+        print(f"✅ Updated Site domain to: {site.domain}")
     else:
-        # Update site domain if it changed
-        if site.domain != site_domain:
-            site.domain = site_domain
-            site.name = 'Alpaca Trading SaaS'
-            site.save()
-            print(f"✅ Updated site domain to: {site.domain}")
-        else:
-            print(f"✅ Site already exists: {site.domain}")
+        print(f"✅ Site already configured: {site.domain}")
 
-    # IMPORTANT: Remove any database OAuth apps to avoid conflicts with settings-based APP
-    # OAuth credentials are now in SOCIALACCOUNT_PROVIDERS['google']['APP'] in settings
-    db_apps = SocialApp.objects.filter(provider='google')
-    if db_apps.exists():
-        count = db_apps.count()
-        db_apps.delete()
-        print(f"⚠️ Removed {count} database OAuth app(s) - using settings-based APP config")
+    # 4. Get OAuth credentials from environment
+    client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
+    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
+    if not client_id or not client_secret:
+        print("⚠️ GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in environment")
+        print("   Skipping SocialApp setup - OAuth will not work until credentials are provided")
+        return True
+
+    # 5. Create or update SocialApp for Google
+    apps = SocialApp.objects.filter(provider='google')
+    if apps.exists():
+        app = apps.first()
+        app.client_id = client_id
+        app.secret = client_secret
+        app.name = 'Google Auth'
+        app.save()
+        print("✅ Updated existing SocialApp for Google")
     else:
-        print("✅ No database OAuth apps (using settings-based APP config)")
+        app = SocialApp.objects.create(
+            provider='google',
+            name='Google Auth',
+            client_id=client_id,
+            secret=client_secret,
+        )
+        print("✅ Created new SocialApp for Google")
+
+    # 6. Link SocialApp to Site - CRITICAL for allauth to work!
+    if site not in app.sites.all():
+        app.sites.add(site)
+        print(f"✅ Linked SocialApp to Site: {site.domain}")
+    else:
+        print(f"✅ SocialApp already linked to Site: {site.domain}")
 
     return True
 
 
 if __name__ == '__main__':
-    print("🔐 Setting up Django Site for allauth...")
+    print("=" * 50)
+    print("Google OAuth Setup Script")
+    print("=" * 50)
 
     try:
-        success = setup_site()
+        success = setup_google_oauth()
         if success:
-            print("✅ Site setup complete!")
-            print("📝 Note: OAuth credentials configured in settings via SOCIALACCOUNT_PROVIDERS")
+            print("=" * 50)
+            print("✅ Google OAuth setup complete!")
+            print("=" * 50)
             sys.exit(0)
         else:
-            print("⚠️ Site setup failed")
-            sys.exit(1)
+            print("⚠️ Setup completed with warnings")
+            sys.exit(0)
     except Exception as e:
-        print(f"❌ Error setting up Site: {e}")
+        print(f"❌ Error setting up Google OAuth: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
