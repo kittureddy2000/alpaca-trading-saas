@@ -185,10 +185,9 @@ LOGIN_REDIRECT_URL = os.environ.get('LOGIN_REDIRECT_URL', '/auth/callback')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-        },
+        # APP credentials are stored in database via SocialApp model
+        # Do NOT put APP here - it causes MultipleObjectsReturned when both
+        # settings-based and database-based configs exist
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
     }
