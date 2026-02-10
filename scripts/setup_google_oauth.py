@@ -67,8 +67,22 @@ def setup_google_oauth():
         return True
 
     # 5. Create or update SocialApp for Google
+    # First, clean up any duplicates (keep only one)
     apps = SocialApp.objects.filter(provider='google')
-    if apps.exists():
+    if apps.count() > 1:
+        # Keep the first one, delete the rest
+        first_app = apps.first()
+        duplicates = apps.exclude(id=first_app.id)
+        count = duplicates.count()
+        duplicates.delete()
+        print(f"⚠️ Deleted {count} duplicate SocialApp(s) for Google")
+        app = first_app
+        app.client_id = client_id
+        app.secret = client_secret
+        app.name = 'Google Auth'
+        app.save()
+        print("✅ Updated SocialApp for Google")
+    elif apps.exists():
         app = apps.first()
         app.client_id = client_id
         app.secret = client_secret
