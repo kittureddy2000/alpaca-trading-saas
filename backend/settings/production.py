@@ -134,6 +134,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Logging for production
 LOGGING['root']['level'] = 'INFO'
 LOGGING['loggers']['trading_api']['level'] = 'INFO'
+LOGGING['loggers']['allauth'] = {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False}
+LOGGING['loggers']['allauth.socialaccount'] = {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False}
 
 
 # OAuth Redirect URLs for production

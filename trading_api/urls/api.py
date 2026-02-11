@@ -16,6 +16,10 @@ from trading_api.views.alpaca import (
     AlpacaDisconnectView,
     AlpacaStatusView,
 )
+from trading_api.views.alpaca_oauth import (
+    AlpacaOAuthConnectView,
+    AlpacaOAuthCallbackView,
+)
 from trading_api.views.settings import (
     UserSettingsView,
 )
@@ -43,6 +47,10 @@ urlpatterns = [
     path('alpaca/connect', AlpacaConnectView.as_view(), name='alpaca-connect'),
     path('alpaca/disconnect', AlpacaDisconnectView.as_view(), name='alpaca-disconnect'),
     path('alpaca/status', AlpacaStatusView.as_view(), name='alpaca-status'),
+    
+    # Alpaca OAuth
+    path('alpaca/oauth/connect', AlpacaOAuthConnectView.as_view(), name='alpaca-oauth-connect'),
+    path('alpaca/oauth/callback', AlpacaOAuthCallbackView.as_view(), name='alpaca-oauth-callback'),
 
     # User Settings
     path('settings', UserSettingsView.as_view(), name='user-settings'),

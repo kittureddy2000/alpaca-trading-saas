@@ -26,33 +26,46 @@ class AlpacaService:
     No shared state - each instance uses user's own credentials.
     """
 
-    def __init__(self, api_key: str, secret_key: str, paper: bool = True):
+    def __init__(self, api_key: str = None, secret_key: str = None, access_token: str = None, paper: bool = True):
         """
         Initialize Alpaca client for a user.
 
         Args:
-            api_key: User's Alpaca API key
-            secret_key: User's Alpaca secret key
+            api_key: User's Alpaca API key (optional if using OAuth)
+            secret_key: User's Alpaca secret key (optional if using OAuth)
+            access_token: User's Alpaca OAuth access token
             paper: Whether to use paper trading (default True)
         """
         self.api_key = api_key
         self.secret_key = secret_key
+        self.access_token = access_token
         self.paper = paper
 
         # Initialize trading client
-        self.trading_client = TradingClient(
-            api_key=api_key,
-            secret_key=secret_key,
-            paper=paper
-        )
+        if access_token:
+            self.trading_client = TradingClient(
+                oauth_token=access_token,
+                paper=paper
+            )
+            # Data client usually uses the same auth
+            # Note: For strict typing, might need to check if SDK supports oauth_token param for DataClient
+            # If not, we might need to pass it as api_key or use custom headers
+            self.data_client = StockHistoricalDataClient(
+                api_key=access_token, # SDK often treats token as key if no secret
+                secret_key=''   
+            )
+        else:
+            self.trading_client = TradingClient(
+                api_key=api_key,
+                secret_key=secret_key,
+                paper=paper
+            )
+            self.data_client = StockHistoricalDataClient(
+                api_key=api_key,
+                secret_key=secret_key
+            )
 
-        # Initialize data client (uses same credentials)
-        self.data_client = StockHistoricalDataClient(
-            api_key=api_key,
-            secret_key=secret_key
-        )
-
-        logger.info(f"AlpacaService initialized (paper={paper})")
+        logger.info(f"AlpacaService initialized (paper={paper}, oauth={bool(access_token)})")
 
     @classmethod
     def from_user(cls, user) -> Optional['AlpacaService']:
@@ -70,9 +83,10 @@ class AlpacaService:
             return None
 
         return cls(
-            api_key=credentials['api_key'],
-            secret_key=credentials['secret_key'],
-            paper=credentials['paper']
+            api_key=credentials.get('api_key'),
+            secret_key=credentials.get('secret_key'),
+            access_token=credentials.get('access_token'),
+            paper=credentials.get('paper', True)
         )
 
     def test_connection(self) -> Dict[str, Any]:

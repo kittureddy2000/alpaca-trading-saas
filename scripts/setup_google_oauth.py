@@ -25,85 +25,81 @@ def setup_google_oauth():
     """Configure Google OAuth with database SocialApp linked to Site."""
     print("🔐 Setting up Google OAuth...")
 
-    # 1. Get site domain from ALLOWED_HOSTS
+    # 1. Get all allowed hosts from environment
     allowed_hosts = os.environ.get('ALLOWED_HOSTS', '').split(',')
-    site_domain = 'localhost'
+    
+    # Filter out invalid hosts
+    valid_hosts = []
     for host in allowed_hosts:
         host = host.strip()
-        if host and host != '*':
-            site_domain = host
-            if '.run.app' in host:
-                break  # Prefer Cloud Run URL
+        if host and host != '*' and 'localhost' not in host and '127.0.0.1' not in host:
+             valid_hosts.append(host)
+    
+    # Always include localhost for local dev if not present (optional, but good for testing)
+    # valid_hosts.append('localhost') 
+    
+    # If no valid hosts found (e.g. only *), fallback or just warn
+    if not valid_hosts:
+        print("⚠️ No specific hosts found in ALLOWED_HOSTS. Defaulting to 'example.com' for Site setup.")
+        valid_hosts = ['example.com']
 
-    # 2. Clean up duplicate Sites (keep only id=1)
-    extra_sites = Site.objects.exclude(id=1)
-    if extra_sites.exists():
-        count = extra_sites.count()
-        extra_sites.delete()
-        print(f"⚠️ Deleted {count} duplicate Site(s)")
+    print(f"📋 Configuring Sites for hosts: {valid_hosts}")
 
-    # 3. Setup Site (id=1 required by allauth)
-    site, created = Site.objects.get_or_create(
-        id=1,
-        defaults={'domain': site_domain, 'name': 'Alpaca Trading SaaS'}
-    )
-    if created:
-        print(f"✅ Created Site: {site.domain}")
-    elif site.domain != site_domain:
-        site.domain = site_domain
-        site.name = 'Alpaca Trading SaaS'
-        site.save()
-        print(f"✅ Updated Site domain to: {site.domain}")
-    else:
-        print(f"✅ Site already configured: {site.domain}")
+    # 2. Create/Update Sites for EACH valid host
+    sites = []
+    for domain in valid_hosts:
+        # Check if site exists by domain
+        site, created = Site.objects.get_or_create(
+            domain=domain,
+            defaults={'name': 'Alpaca Trading SaaS'}
+        )
+        if created:
+             print(f"✅ Created Site: {site.domain}")
+        else:
+             print(f"✅ Found existing Site: {site.domain}")
+        sites.append(site)
+        
+    # Ensure ID=1 exists and is reasonable (allauth often defaults to ID=1)
+    # If ID=1 was not in our list (e.g. we just created ID=2, 3...), we might want to 
+    # make sure ID=1 is one of our valid sites or just leave it.
+    # For simplicity, we just trust the sites we collected.
 
-    # 4. Get OAuth credentials from environment
+    # 3. Get OAuth credentials from environment
     client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 
     if not client_id or not client_secret:
         print("⚠️ GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in environment")
         print("   Skipping SocialApp setup - OAuth will not work until credentials are provided")
+        print(f"Configuring Google OAuth with Client ID: {client_id}")
         return True
 
-    # 5. Create or update SocialApp for Google
-    # First, clean up any duplicates (keep only one)
-    apps = SocialApp.objects.filter(provider='google')
-    if apps.count() > 1:
-        # Keep the first one, delete the rest
-        first_app = apps.first()
-        duplicates = apps.exclude(id=first_app.id)
-        count = duplicates.count()
-        duplicates.delete()
-        print(f"⚠️ Deleted {count} duplicate SocialApp(s) for Google")
-        app = first_app
+    # 4. Create or update SocialApp for Google
+    app, created = SocialApp.objects.update_or_create(
+        provider='google',
+        defaults={
+            'name': 'Google Auth',
+            'client_id': client_id,
+            'secret': client_secret,
+        }
+    )
+    
+    if not created:
+        # Update credentials if they changed
         app.client_id = client_id
         app.secret = client_secret
-        app.name = 'Google Auth'
-        app.save()
-        print("✅ Updated SocialApp for Google")
-    elif apps.exists():
-        app = apps.first()
-        app.client_id = client_id
-        app.secret = client_secret
-        app.name = 'Google Auth'
         app.save()
         print("✅ Updated existing SocialApp for Google")
     else:
-        app = SocialApp.objects.create(
-            provider='google',
-            name='Google Auth',
-            client_id=client_id,
-            secret=client_secret,
-        )
         print("✅ Created new SocialApp for Google")
 
-    # 6. Link SocialApp to Site - CRITICAL for allauth to work!
-    if site not in app.sites.all():
-        app.sites.add(site)
-        print(f"✅ Linked SocialApp to Site: {site.domain}")
-    else:
-        print(f"✅ SocialApp already linked to Site: {site.domain}")
+    # 5. Link SocialApp to ALL Sites
+    for site in sites:
+        if site not in app.sites.all():
+            app.sites.add(site)
+            print(f"✅ Linked SocialApp to Site: {site.domain}")
+        else:
+            print(f"✅ SocialApp already linked to Site: {site.domain}")
 
     return True
 

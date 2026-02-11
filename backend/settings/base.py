@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',  # Required for dynamic site selection
     'allauth.account.middleware.AccountMiddleware',
 ]
 
@@ -128,14 +129,15 @@ SITE_ID = 1
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        # SessionAuthentication REMOVED - it interferes with JWT-only OAuth flow
-        # Allauth handles sessions internally, DRF should only use JWT
+        'rest_framework.authentication.SessionAuthentication',  # Required for allauth OAuth
     ],
-    # DEFAULT_PERMISSION_CLASSES REMOVED - it blocks allauth callback with 401
-    # Apply IsAuthenticated explicitly on views that need it instead
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 
 # JWT Settings
@@ -196,10 +198,15 @@ SOCIALACCOUNT_PROVIDERS = {
 # Frontend URL for redirects
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
-# Alpaca API (default for paper trading demo)
+# Alpaca API (default for paper trading demo & OAuth)
 ALPACA_API_KEY = os.environ.get('ALPACA_API_KEY', '')
 ALPACA_SECRET_KEY = os.environ.get('ALPACA_SECRET_KEY', '')
 ALPACA_PAPER = os.environ.get('ALPACA_PAPER', 'true').lower() == 'true'
+
+# Alpaca OAuth (SaaS Mode)
+ALPACA_CLIENT_ID = os.environ.get('ALPACA_CLIENT_ID', '')
+ALPACA_CLIENT_SECRET = os.environ.get('ALPACA_CLIENT_SECRET', '')
+ALPACA_REDIRECT_URI = os.environ.get('ALPACA_REDIRECT_URI', '')
 
 # Stripe Billing
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')

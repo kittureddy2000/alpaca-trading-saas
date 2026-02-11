@@ -75,9 +75,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Google OAuth (legacy field for compatibility)
     google_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
 
-    # Alpaca Connection (API Key approach)
+    # Alpaca Connection (API Key approach - Legacy/Alternative)
     alpaca_api_key = models.CharField(max_length=50, blank=True)
     _alpaca_secret_key = models.BinaryField(null=True, blank=True, db_column='alpaca_secret_key')
+    
+    # Alpaca OAuth (Preferred)
+    _alpaca_access_token = models.BinaryField(null=True, blank=True)
+    _alpaca_refresh_token = models.BinaryField(null=True, blank=True)
+    alpaca_token_expires_at = models.DateTimeField(null=True, blank=True)
+    alpaca_oauth_scope = models.CharField(max_length=255, blank=True)
+
     alpaca_account_id = models.CharField(max_length=50, blank=True)
     alpaca_is_paper = models.BooleanField(default=True)
     alpaca_connected = models.BooleanField(default=False)
@@ -117,15 +124,67 @@ class User(AbstractBaseUser, PermissionsMixin):
             f = Fernet(get_encryption_key())
             self._alpaca_secret_key = f.encrypt(value.encode())
 
+    @property
+    def alpaca_access_token(self):
+        """Decrypt and return the Alpaca access token."""
+        if not self._alpaca_access_token:
+            return ''
+        try:
+            f = Fernet(get_encryption_key())
+            return f.decrypt(bytes(self._alpaca_access_token)).decode()
+        except Exception:
+            return ''
+
+    @alpaca_access_token.setter
+    def alpaca_access_token(self, value):
+        """Encrypt and store the Alpaca access token."""
+        if not value:
+            self._alpaca_access_token = None
+        else:
+            f = Fernet(get_encryption_key())
+            self._alpaca_access_token = f.encrypt(value.encode())
+
+    @property
+    def alpaca_refresh_token(self):
+        """Decrypt and return the Alpaca refresh token."""
+        if not self._alpaca_refresh_token:
+            return ''
+        try:
+            f = Fernet(get_encryption_key())
+            return f.decrypt(bytes(self._alpaca_refresh_token)).decode()
+        except Exception:
+            return ''
+
+    @alpaca_refresh_token.setter
+    def alpaca_refresh_token(self, value):
+        """Encrypt and store the Alpaca refresh token."""
+        if not value:
+            self._alpaca_refresh_token = None
+        else:
+            f = Fernet(get_encryption_key())
+            self._alpaca_refresh_token = f.encrypt(value.encode())
+
     def get_alpaca_credentials(self):
         """Get Alpaca API credentials for this user."""
-        if not self.alpaca_connected or not self.alpaca_api_key:
+        if not self.alpaca_connected:
             return None
-        return {
-            'api_key': self.alpaca_api_key,
-            'secret_key': self.alpaca_secret_key,
-            'paper': self.alpaca_is_paper,
-        }
+        
+        # Prefer OAuth token if available
+        if self.alpaca_access_token:
+            return {
+                'access_token': self.alpaca_access_token,
+                'paper': self.alpaca_is_paper, # OAuth is usually live, but we keep this flag
+            }
+
+        # Fallback to API Key
+        if self.alpaca_api_key:
+            return {
+                'api_key': self.alpaca_api_key,
+                'secret_key': self.alpaca_secret_key,
+                'paper': self.alpaca_is_paper,
+            }
+            
+        return None
 
     def mask_api_key(self):
         """Return masked API key for display (show last 4 chars)."""

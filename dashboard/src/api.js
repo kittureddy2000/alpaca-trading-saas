@@ -146,6 +146,17 @@ export const disconnectAlpaca = async () => {
     return response.data;
 };
 
+// Alpaca OAuth
+export const getAlpacaOAuthUrl = async () => {
+    const response = await api.get('/api/alpaca/oauth/connect');
+    return response.data;
+};
+
+export const connectAlpacaOAuth = async (code, state) => {
+    const response = await api.post('/api/alpaca/oauth/callback', { code, state });
+    return response.data;
+};
+
 // User Settings
 export const getSettings = async () => {
     const response = await api.get('/api/settings');

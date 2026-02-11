@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { getPortfolio, getPositions, getMarket, getWatchlist, getTrades, getIndicators, getCurrentUser, getLoginUrl, getLogoutUrl, register, login, getOptionChain, getCollarStrategy, addToWatchlist, removeFromWatchlist, setTokens, clearTokens, getAccessToken, getAlpacaStatus, connectAlpaca, disconnectAlpaca, getSettings, updateSettings, getSubscription, createCheckoutSession, createPortalSession } from './api';
+import { getPortfolio, getPositions, getMarket, getWatchlist, getTrades, getIndicators, getCurrentUser, getLoginUrl, getLogoutUrl, register, login, getOptionChain, getCollarStrategy, addToWatchlist, removeFromWatchlist, setTokens, clearTokens, getAccessToken, getAlpacaStatus, connectAlpaca, disconnectAlpaca, getSettings, updateSettings, getSubscription, createCheckoutSession, createPortalSession, getAlpacaOAuthUrl, connectAlpacaOAuth } from './api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './App.css';
 
@@ -543,6 +543,7 @@ function AlpacaConnectPage({ subscription }) {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showManual, setShowManual] = useState(false);
   const [formData, setFormData] = useState({
     apiKey: '',
     secretKey: '',
@@ -551,6 +552,17 @@ function AlpacaConnectPage({ subscription }) {
 
   useEffect(() => {
     fetchStatus();
+
+    // Check for success message from OAuth redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('alpaca_connected') === 'true') {
+      setSuccess('Alpaca account connected successfully via OAuth!');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('alpaca_error')) {
+      setError(decodeURIComponent(params.get('alpaca_error')));
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   const fetchStatus = async () => {
@@ -561,6 +573,22 @@ function AlpacaConnectPage({ subscription }) {
       console.error('Failed to fetch Alpaca status:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOAuthConnect = async () => {
+    try {
+      setConnecting(true);
+      const data = await getAlpacaOAuthUrl();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        setError('Failed to get authorization URL');
+        setConnecting(false);
+      }
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to initiate connection');
+      setConnecting(false);
     }
   };
 
@@ -638,7 +666,7 @@ function AlpacaConnectPage({ subscription }) {
             </div>
             <div className="detail-row">
               <span className="label">API Key:</span>
-              <span className="value">****{status.api_key_last4}</span>
+              <span className="value">****{status.api_key_last4 || (status.last_error ? 'OAuth' : 'OAuth')}</span>
             </div>
             <div className="detail-row">
               <span className="label">Connected:</span>
@@ -656,46 +684,61 @@ function AlpacaConnectPage({ subscription }) {
             <span>Not Connected</span>
           </div>
 
-          <form onSubmit={handleConnect} className="connect-form">
-            <div className="form-group">
-              <label>API Key</label>
-              <input
-                type="text"
-                value={formData.apiKey}
-                onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                placeholder="PKXXXXXXXXXXXXXXXX"
-              />
-            </div>
-            <div className="form-group">
-              <label>Secret Key</label>
-              <input
-                type="password"
-                value={formData.secretKey}
-                onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
-                placeholder="Enter your secret key"
-              />
-            </div>
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.paper}
-                  onChange={(e) => setFormData({ ...formData, paper: e.target.checked })}
-                />
-                Paper Trading Mode
-                {!subscription?.live_trading_enabled && (
-                  <span className="upgrade-hint">(Live trading requires Pro subscription)</span>
-                )}
-              </label>
-            </div>
-            <button type="submit" className="btn-connect" disabled={connecting}>
-              {connecting ? 'Connecting...' : 'Connect Alpaca Account'}
+          <div className="oauth-section">
+            <p>Connect securely with your existing Alpaca account.</p>
+            <button className="btn-oauth-connect" onClick={handleOAuthConnect} disabled={connecting}>
+              {connecting ? 'Redirecting...' : 'Connect with Alpaca'}
             </button>
-          </form>
-
-          <div className="help-text">
-            <p>Get your API keys from <a href="https://app.alpaca.markets/paper/dashboard/overview" target="_blank" rel="noopener noreferrer">Alpaca Dashboard</a></p>
           </div>
+
+          <div className="manual-connect-toggle">
+            <button className="btn-link" onClick={() => setShowManual(!showManual)}>
+              {showManual ? 'Hide Manual Connection' : 'Trouble connecting? Enter keys manually'}
+            </button>
+          </div>
+
+          {showManual && (
+            <form onSubmit={handleConnect} className="connect-form">
+              <div className="form-group">
+                <label>API Key</label>
+                <input
+                  type="text"
+                  value={formData.apiKey}
+                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                  placeholder="PKXXXXXXXXXXXXXXXX"
+                />
+              </div>
+              <div className="form-group">
+                <label>Secret Key</label>
+                <input
+                  type="password"
+                  value={formData.secretKey}
+                  onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
+                  placeholder="Enter your secret key"
+                />
+              </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.paper}
+                    onChange={(e) => setFormData({ ...formData, paper: e.target.checked })}
+                  />
+                  Paper Trading Mode
+                  {!subscription?.live_trading_enabled && (
+                    <span className="upgrade-hint">(Live trading requires Pro subscription)</span>
+                  )}
+                </label>
+              </div>
+              <button type="submit" className="btn-connect" disabled={connecting}>
+                {connecting ? 'Connecting...' : 'Connect Alpaca Account'}
+              </button>
+
+              <div className="help-text">
+                <p>Get your API keys from <a href="https://app.alpaca.markets/paper/dashboard/overview" target="_blank" rel="noopener noreferrer">Alpaca Dashboard</a></p>
+              </div>
+            </form>
+          )}
         </div>
       )}
     </div>
@@ -1208,12 +1251,39 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('access');
     const refreshToken = params.get('refresh');
+    const alpacaCode = params.get('code');
+    const alpacaState = params.get('state');
 
+    // Handle App Login Redirect
     if (accessToken) {
       // Store tokens in localStorage
       setTokens(accessToken, refreshToken);
       // Clean URL (remove query params) so it looks normal
       window.history.replaceState({}, '', window.location.pathname);
+      // Check auth immediately
+      checkAuth();
+    }
+
+    // Handle Alpaca OAuth Exchange
+    if (alpacaCode && alpacaState) {
+      // Exchange code for token
+      connectAlpacaOAuth(alpacaCode, alpacaState)
+        .then(() => {
+          // Determine redirect behavior - ideally stay on alpaca page
+          setCurrentPage('alpaca');
+          // We'll append a success param for the page to read
+          const newUrl = window.location.pathname + '?alpaca_connected=true';
+          window.history.replaceState({}, '', newUrl);
+          // Trigger fetch data to update ui
+          fetchData();
+        })
+        .catch(err => {
+          console.error("Alpaca OAuth Failed", err);
+          const errorMsg = err.response?.data?.error || "Connection failed";
+          const newUrl = window.location.pathname + '?alpaca_error=' + encodeURIComponent(errorMsg);
+          setCurrentPage('alpaca');
+          window.history.replaceState({}, '', newUrl);
+        });
     }
   }, []);
 
@@ -1629,7 +1699,7 @@ function App() {
                 </button>
               </div>
               {watchlistError && (
-                <div className="watchlist-error" style={{color: '#ff6b6b', fontSize: '12px', marginBottom: '8px'}}>
+                <div className="watchlist-error" style={{ color: '#ff6b6b', fontSize: '12px', marginBottom: '8px' }}>
                   {watchlistError}
                 </div>
               )}
