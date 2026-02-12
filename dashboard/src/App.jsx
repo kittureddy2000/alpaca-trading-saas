@@ -229,24 +229,24 @@ function OptionChainPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis
                       dataKey="expiration"
-                      stroke="#555"
-                      tick={{ fill: '#8b8b9e', fontSize: 11 }}
+                      stroke="#94a3b8"
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'JetBrains Mono' }}
                       angle={-35}
                       textAnchor="end"
                       height={50}
                     />
                     <YAxis
                       yAxisId="left"
-                      stroke="#ffd93d"
-                      tick={{ fill: '#8b8b9e', fontSize: 11 }}
+                      stroke="#ffc800"
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'JetBrains Mono' }}
                       tickFormatter={(v) => `${v}%`}
                       width={55}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
-                      stroke="#4da6ff"
-                      tick={{ fill: '#8b8b9e', fontSize: 11 }}
+                      stroke="#00f2ff"
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'JetBrains Mono' }}
                       tickFormatter={(v) => `$${v}`}
                       width={65}
                     />
@@ -254,27 +254,27 @@ function OptionChainPage() {
                     <Legend
                       verticalAlign="top"
                       height={36}
-                      wrapperStyle={{ fontSize: 12, color: '#8b8b9e' }}
+                      wrapperStyle={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase' }}
                     />
                     <Line
                       yAxisId="left"
                       type="monotone"
                       dataKey="iv"
-                      stroke="#ffd93d"
+                      stroke="#ffc800"
                       strokeWidth={2}
                       name="Implied Volatility (%)"
-                      dot={{ fill: '#ffd93d', r: 3, strokeWidth: 0 }}
-                      activeDot={{ r: 5, stroke: '#ffd93d', strokeWidth: 2, fill: '#1a1a24' }}
+                      dot={{ fill: '#ffc800', r: 3, strokeWidth: 0 }}
+                      activeDot={{ r: 6, stroke: '#ffc800', strokeWidth: 0, fill: '#ffc800', filter: 'drop-shadow(0 0 8px rgba(255, 200, 0, 0.5))' }}
                     />
                     <Line
                       yAxisId="right"
                       type="monotone"
                       dataKey="price"
-                      stroke="#4da6ff"
+                      stroke="#00f2ff"
                       strokeWidth={2}
                       name="Last Price ($)"
-                      dot={{ fill: '#4da6ff', r: 3, strokeWidth: 0 }}
-                      activeDot={{ r: 5, stroke: '#4da6ff', strokeWidth: 2, fill: '#1a1a24' }}
+                      dot={{ fill: '#00f2ff', r: 3, strokeWidth: 0 }}
+                      activeDot={{ r: 6, stroke: '#00f2ff', strokeWidth: 0, fill: '#00f2ff', filter: 'drop-shadow(0 0 8px rgba(0, 242, 255, 0.5))' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -750,11 +750,32 @@ function AlpacaConnectPage({ subscription }) {
 // Settings Page Component
 // ============================================================
 function SettingsPage({ subscription }) {
-  const [settings, setSettings] = useState(null);
+  const [formData, setFormData] = useState({
+    strategy: 'balanced',
+    analysis_interval_minutes: 15,
+    max_position_pct: 0.10,
+    max_daily_loss_pct: 0.03,
+    min_confidence: 0.70,
+    stop_loss_pct: 0.05,
+    take_profit_pct: 0.10,
+    email_daily_summary: true,
+    email_trade_alerts: true,
+    email_weekly_report: false,
+    active_indicators: {
+      'RSI': true,
+      'MACD': true,
+      'SMA': true,
+      'EMA': true,
+      'Bollinger Bands': true,
+      'Volume Analysis': true,
+      'VWAP': true,
+      'ATR': true,
+      'Price Changes': true,
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     fetchSettings();
@@ -762,160 +783,233 @@ function SettingsPage({ subscription }) {
 
   const fetchSettings = async () => {
     try {
-      const data = await getSettings();
-      setSettings(data);
-    } catch (e) {
-      setError('Failed to load settings');
+      const result = await getSettings();
+      if (result.settings) {
+        // Ensure active_indicators defaults are set if missing
+        const defaultIndicators = {
+          'RSI': true, 'MACD': true, 'SMA': true, 'EMA': true,
+          'Bollinger Bands': true, 'Volume Analysis': true,
+          'VWAP': true, 'ATR': true, 'Price Changes': true
+        };
+        setFormData(prev => ({
+          ...prev, // Keep existing formData defaults if result.settings doesn't override them
+          ...result.settings,
+          active_indicators: { ...defaultIndicators, ...result.settings.active_indicators }
+        }));
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = async (e) => {
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleIndicatorToggle = (indicator) => {
+    setFormData(prev => ({
+      ...prev,
+      active_indicators: {
+        ...prev.active_indicators,
+        [indicator]: !prev.active_indicators[indicator]
+      }
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
-
+    setMessage(null);
     try {
-      await updateSettings(settings);
-      setSuccess('Settings saved successfully!');
-    } catch (e) {
-      setError(e.response?.data?.error || 'Failed to save settings');
+      await updateSettings(formData);
+      setMessage({ type: 'success', text: 'Settings updated successfully' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update settings' });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <div className="page-loading">Loading...</div>;
-  }
-
-  const canEditSettings = subscription?.tier !== 'free';
+  if (loading) return <div className="loading">Loading settings...</div>;
 
   return (
-    <div className="settings-page">
-      <div className="settings-header">
-        <h1>Trading Settings</h1>
-        <p>Configure your trading parameters and risk controls</p>
-      </div>
+    <div className="page-container">
+      <h1>Trading Settings</h1>
 
-      {!canEditSettings && (
-        <div className="upgrade-banner">
-          Custom trading settings require a Pro or Enterprise subscription.
-          <a href="#billing">Upgrade Now</a>
+      {!subscription?.custom_settings && (
+        <div className="settings-locked-banner">
+          <div className="locked-icon">🔒</div>
+          <div className="locked-content">
+            <h3>Pro Feature Locked</h3>
+            <p>Upgrade to Pro or Enterprise to customize your AI trading strategy.</p>
+          </div>
+          <button className="btn-upgrade" onClick={() => window.location.href = '/billing'}>Upgrade Now</button>
         </div>
       )}
 
-      {error && <div className="settings-error">{error}</div>}
-      {success && <div className="settings-success">{success}</div>}
+      {message && (
+        <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+          {message.text}
+        </div>
+      )}
 
-      <form onSubmit={handleSave} className="settings-form">
-        <div className="settings-card">
-          <h3>Strategy</h3>
+      <form onSubmit={handleSubmit} className={`settings-form ${!subscription?.custom_settings ? 'disabled' : ''}`}>
+
+        {/* Trading Strategy */}
+        <div className="settings-section">
+          <h2>Strategy Configuration</h2>
           <div className="form-group">
             <label>Trading Strategy</label>
-            <select
-              value={settings?.strategy || 'balanced'}
-              onChange={(e) => setSettings({ ...settings, strategy: e.target.value })}
-              disabled={!canEditSettings}
-            >
-              <option value="momentum">Momentum</option>
+            <select name="strategy" value={formData.strategy} onChange={handleChange} disabled={!subscription?.custom_settings}>
+              <option value="balanced">Balanced (Recommended)</option>
+              <option value="momentum">Momentum (Aggressive)</option>
               <option value="mean_reversion">Mean Reversion</option>
               <option value="contrarian">Contrarian</option>
-              <option value="balanced">Balanced</option>
             </select>
+            <p className="help-text">Determines the overall risk profile and trade frequency.</p>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Analysis Interval (Minutes)</label>
+              <input
+                type="number"
+                name="analysis_interval_minutes"
+                value={formData.analysis_interval_minutes}
+                onChange={handleChange}
+                min="1" max="1440"
+                disabled={!subscription?.custom_settings}
+              />
+            </div>
+            <div className="form-group">
+              <label>Min Confidence (%)</label>
+              <input
+                type="number"
+                name="min_confidence"
+                value={formData.min_confidence}
+                onChange={handleChange}
+                step="0.05" min="0.5" max="0.99"
+                disabled={!subscription?.custom_settings}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="settings-card">
-          <h3>Risk Management</h3>
-          <div className="settings-grid">
+        {/* AI Configuration */}
+        <div className="settings-section">
+          <h2>AI Agent Configuration</h2>
+          <p className="section-desc">Select which technical indicators the AI should consider.</p>
+          <div className="indicators-grid">
+            {Object.keys(formData.active_indicators || {}).map(ind => (
+              <div key={ind} className="indicator-toggle">
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={formData.active_indicators[ind]}
+                    onChange={() => handleIndicatorToggle(ind)}
+                    disabled={!subscription?.custom_settings}
+                  />
+                  <span className="slider round"></span>
+                </label>
+                <span className="toggle-label">{ind}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Risk Management */}
+        <div className="settings-section">
+          <h2>Risk Management</h2>
+          <div className="form-row">
             <div className="form-group">
               <label>Max Position Size (%)</label>
               <input
                 type="number"
-                step="0.01"
-                min="0.01"
-                max="1"
-                value={settings?.max_position_pct || 0.10}
-                onChange={(e) => setSettings({ ...settings, max_position_pct: parseFloat(e.target.value) })}
-                disabled={!canEditSettings}
+                name="max_position_pct"
+                value={formData.max_position_pct}
+                onChange={handleChange}
+                step="0.01" min="0.01" max="1.0"
+                disabled={!subscription?.custom_settings}
               />
             </div>
             <div className="form-group">
               <label>Max Daily Loss (%)</label>
               <input
                 type="number"
-                step="0.01"
-                min="0.01"
-                max="0.5"
-                value={settings?.max_daily_loss_pct || 0.03}
-                onChange={(e) => setSettings({ ...settings, max_daily_loss_pct: parseFloat(e.target.value) })}
-                disabled={!canEditSettings}
+                name="max_daily_loss_pct"
+                value={formData.max_daily_loss_pct}
+                onChange={handleChange}
+                step="0.01" min="0.01" max="0.5"
+                disabled={!subscription?.custom_settings}
               />
             </div>
+          </div>
+          <div className="form-row">
             <div className="form-group">
               <label>Stop Loss (%)</label>
               <input
                 type="number"
-                step="0.01"
-                min="0.01"
-                max="0.5"
-                value={settings?.stop_loss_pct || 0.05}
-                onChange={(e) => setSettings({ ...settings, stop_loss_pct: parseFloat(e.target.value) })}
-                disabled={!canEditSettings}
+                name="stop_loss_pct"
+                value={formData.stop_loss_pct}
+                onChange={handleChange}
+                step="0.01" min="0.01" max="0.5"
+                disabled={!subscription?.custom_settings}
               />
             </div>
             <div className="form-group">
               <label>Take Profit (%)</label>
               <input
                 type="number"
-                step="0.01"
-                min="0.01"
-                max="1"
-                value={settings?.take_profit_pct || 0.10}
-                onChange={(e) => setSettings({ ...settings, take_profit_pct: parseFloat(e.target.value) })}
-                disabled={!canEditSettings}
+                name="take_profit_pct"
+                value={formData.take_profit_pct}
+                onChange={handleChange}
+                step="0.01" min="0.01" max="1.0"
+                disabled={!subscription?.custom_settings}
               />
             </div>
           </div>
         </div>
 
-        <div className="settings-card">
-          <h3>Analysis</h3>
-          <div className="settings-grid">
-            <div className="form-group">
-              <label>Analysis Interval (minutes)</label>
+        {/* Notifications */}
+        <div className="settings-section">
+          <h2>Notifications</h2>
+          <div className="checkbox-group">
+            <label className="checkbox-label">
               <input
-                type="number"
-                min="5"
-                max="60"
-                value={settings?.analysis_interval_minutes || 15}
-                onChange={(e) => setSettings({ ...settings, analysis_interval_minutes: parseInt(e.target.value) })}
-                disabled={!canEditSettings}
+                type="checkbox"
+                name="email_daily_summary"
+                checked={formData.email_daily_summary}
+                onChange={handleChange}
+                disabled={!subscription?.custom_settings}
               />
-            </div>
-            <div className="form-group">
-              <label>Minimum Confidence</label>
+              Email Daily Summary
+            </label>
+          </div>
+          <div className="checkbox-group">
+            <label className="checkbox-label">
               <input
-                type="number"
-                step="0.05"
-                min="0.5"
-                max="0.95"
-                value={settings?.min_confidence || 0.70}
-                onChange={(e) => setSettings({ ...settings, min_confidence: parseFloat(e.target.value) })}
-                disabled={!canEditSettings}
+                type="checkbox"
+                name="email_trade_alerts"
+                checked={formData.email_trade_alerts}
+                onChange={handleChange}
+                disabled={!subscription?.custom_settings}
               />
-            </div>
+              Email Trade Alerts
+            </label>
           </div>
         </div>
 
-        {canEditSettings && (
-          <button type="submit" className="btn-save-settings" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Settings'}
+        <div className="form-actions">
+          <button type="submit" className="btn-primary" disabled={saving || !subscription?.custom_settings}>
+            {saving ? 'Saving...' : 'Save Configuration'}
           </button>
-        )}
+        </div>
       </form>
     </div>
   );
@@ -1164,7 +1258,7 @@ function AuthPage({ onAuthSuccess }) {
     <div className="dashboard">
       <div className="login-container">
         <div className="login-card">
-          <div className="login-logo">&#x1F916;</div>
+          <div className="login-logo">&#x1F999; &#x1F4C8;</div>
           <h1>LLM Trading Agent</h1>
           <p>AI-powered stock trading with Google Gemini</p>
 
@@ -1438,7 +1532,10 @@ function App() {
       {/* Header */}
       <header className="header">
         <div className="header-left">
-          <h1>&#x1F916; LLM Trading Agent</h1>
+          <div className="title-group">
+            <h1>&#x1F999; &#x1F4C8; LLM Trading Agent</h1>
+            <span className="broker-badge alpaca">Broker: Alpaca</span>
+          </div>
           <div className="market-status">
             <span className={`status-dot ${market?.is_open ? 'open' : ''}`}></span>
             <span className="status-text">
@@ -1619,6 +1716,12 @@ function App() {
                 <span className={`risk-dot ${alpacaStatus?.connected ? 'low' : 'medium'}`}></span>
                 <span className="risk-text">{alpacaStatus?.connected ? 'Connected' : 'Not Connected'}</span>
               </div>
+              {!alpacaStatus?.connected && (
+                <div className="connection-help">
+                  Connect your Alpaca account to see live portfolio data.
+                  <button className="btn-link-action" onClick={() => setCurrentPage('alpaca')}>Connect Now &rarr;</button>
+                </div>
+              )}
               <div className="risk-stats">
                 <div className="stat">
                   <span className="label">Mode</span>

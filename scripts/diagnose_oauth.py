@@ -21,6 +21,10 @@ def diagnose():
     for app in SocialApp.objects.all():
         print(f"   ID: {app.id} | Provider: {app.provider} | Name: {app.name}")
         print(f"   Client ID: {app.client_id[:10]}...{app.client_id[-5:]}")
+        if app.secret:
+             print(f"   Client Secret: {app.secret[:3]}...{app.secret[-3:]}")
+        else:
+             print("   Client Secret: NOT SET")
         print(f"   Linked Sites: {[s.domain for s in app.sites.all()]}")
         
     print("\n--- End Report ---")

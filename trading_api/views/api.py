@@ -15,6 +15,7 @@ from trading_api.models import (
 from trading_api.services.alpaca_service import AlpacaService
 
 import yfinance as yf
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +250,29 @@ class WatchlistView(APIView):
 
         # Get market data for symbols
         watchlist_data = []
+        
+        # Try Alpaca first for live data
+        alpaca_service = None
+        if user.alpaca_connected:
+            try:
+                alpaca_service = AlpacaService.from_user(user)
+            except Exception as e:
+                logger.error(f"Failed to init Alpaca service: {e}")
+
         for symbol in symbols:
+            # Try Alpaca snapshot
+            if alpaca_service:
+                try:
+                    snap = alpaca_service.get_snapshot(symbol)
+                    if snap:
+                        # Append and continue (skip yfinance)
+                        watchlist_data.append(snap)
+                        continue
+                except Exception as e:
+                    # Log error but don't break loop, try fallback
+                    pass # limit logging noise
+
+            # Fallback to yfinance (delayed, but has market_cap)
             try:
                 ticker = yf.Ticker(symbol)
                 info = ticker.info
@@ -394,16 +417,38 @@ class IndicatorsView(APIView):
         indicators = []
 
         for symbol in symbols:
-            try:
-                ticker = yf.Ticker(symbol)
-                hist = ticker.history(period='3mo')
+            close = None
+            current_price = 0
+            
+            # Try Alpaca first
+            if user.alpaca_connected:
+                try:
+                    service = AlpacaService.from_user(user)
+                    if service:
+                        bars = service.get_bars(symbol, timeframe='1Day', limit=90)
+                        if bars:
+                            df = pd.DataFrame(bars)
+                            close = df['close']
+                            current_price = close.iloc[-1]
+                except Exception as e:
+                    # Log but continue to fallback
+                    pass
 
-                if hist.empty:
+            if close is None:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    hist = ticker.history(period='3mo')
+
+                    if hist.empty:
+                        continue
+
+                    close = hist['Close']
+                    current_price = close.iloc[-1]
+                except Exception as e:
+                    logger.warning(f"Failed to calculate indicators for {symbol}: {e}")
                     continue
 
-                close = hist['Close']
-                current_price = close.iloc[-1]
-
+            try:
                 # Basic indicators (free)
                 rsi = self._calculate_rsi(close)
                 macd, signal = self._calculate_macd(close)

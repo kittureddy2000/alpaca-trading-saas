@@ -461,3 +461,55 @@ class AlpacaService:
         except Exception as e:
             logger.error(f"Failed to get bars for {symbol}: {e}")
             return []
+
+    def get_snapshot(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Get snapshot for a symbol (latest trade, quote, and minute bar).
+
+        Args:
+            symbol: Stock symbol
+
+        Returns:
+            Snapshot data
+        """
+        try:
+            from alpaca.data.requests import StockSnapshotRequest
+            
+            request = StockSnapshotRequest(symbol_or_symbols=symbol)
+            snapshots = self.data_client.get_stock_snapshot(request)
+
+            if symbol in snapshots:
+                snap = snapshots[symbol]
+                
+                # Daily bar for change calculation
+                daily_bar = snap.daily_bar
+                prev_close = 0
+                
+                if snap.previous_daily_bar:
+                    prev_close = float(snap.previous_daily_bar.close)
+                elif daily_bar:
+                    prev_close = float(daily_bar.open) # Approximation
+
+                current_price = 0
+                if snap.latest_trade:
+                    current_price = float(snap.latest_trade.price)
+                elif snap.latest_quote:
+                    current_price = (float(snap.latest_quote.ask_price) + float(snap.latest_quote.bid_price)) / 2
+                elif daily_bar:
+                    current_price = float(daily_bar.close)
+
+                change = current_price - prev_close
+                change_pct = (change / prev_close * 100) if prev_close else 0
+
+                return {
+                    'symbol': symbol,
+                    'price': current_price,
+                    'change': change,
+                    'change_pct': change_pct,
+                    'volume': int(daily_bar.volume) if daily_bar else 0,
+                    'prev_close': prev_close,
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get snapshot for {symbol}: {e}")
+            return None

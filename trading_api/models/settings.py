@@ -52,9 +52,28 @@ class UserSettings(models.Model):
     email_trade_alerts = models.BooleanField(default=True)
     email_weekly_report = models.BooleanField(default=False)
 
+    # Indicators
+    active_indicators = models.JSONField(default=dict)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Set default indicators if empty
+        if not self.active_indicators:
+            self.active_indicators = {
+                'RSI': True,
+                'MACD': True,
+                'SMA': True,
+                'EMA': True,
+                'Bollinger Bands': True,
+                'Volume Analysis': True,
+                'VWAP': True,
+                'ATR': True,
+                'Price Changes': True,
+            }
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'user_settings'

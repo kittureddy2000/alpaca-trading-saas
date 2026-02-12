@@ -64,3 +64,6 @@ htmlcov/
 *.pem
 *.key
 credentials.json
+env_vars.yaml
+env_vars_job.yaml
+backend/settings/local_build.py

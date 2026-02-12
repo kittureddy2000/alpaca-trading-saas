@@ -42,6 +42,7 @@ class UserSettingsView(APIView):
                 'email_daily_summary': settings_obj.email_daily_summary,
                 'email_trade_alerts': settings_obj.email_trade_alerts,
                 'email_weekly_report': settings_obj.email_weekly_report,
+                'active_indicators': settings_obj.active_indicators,
             }
         })
 
@@ -75,6 +76,7 @@ class UserSettingsView(APIView):
             'email_daily_summary',
             'email_trade_alerts',
             'email_weekly_report',
+            'active_indicators',
         ]
 
         for field in allowed_fields:
@@ -122,5 +124,6 @@ class UserSettingsView(APIView):
                 'email_daily_summary': settings_obj.email_daily_summary,
                 'email_trade_alerts': settings_obj.email_trade_alerts,
                 'email_weekly_report': settings_obj.email_weekly_report,
+                'active_indicators': settings_obj.active_indicators,
             }
         })
