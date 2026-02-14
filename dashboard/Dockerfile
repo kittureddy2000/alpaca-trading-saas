@@ -13,10 +13,13 @@ RUN npm install
 # Copy source
 COPY . .
 
-# Set API URL for production build (Vite embeds at build time)
+# Set build-time env vars (Vite embeds at build time)
 # Will be overridden during Cloud Run deployment
 ARG VITE_API_URL=https://api.stg.alpaca.samaanai.com
 ENV VITE_API_URL=$VITE_API_URL
+
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # Build for production
 RUN npm run build

@@ -148,9 +148,11 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_API_URL=https://api.alpaca.samaanai.com \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             -t gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }} .
           docker build \
             --build-arg VITE_API_URL=https://api.alpaca.samaanai.com \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             -t gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:latest .
           docker push gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }}
           docker push gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:latest

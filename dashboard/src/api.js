@@ -69,6 +69,14 @@ export const login = async (email, password) => {
 export const getLoginUrl = () => `${API_BASE}/auth/google`;
 export const getLogoutUrl = () => `${API_BASE}/auth/logout`;
 
+export const googleTokenLogin = async (idToken) => {
+    const response = await api.post('/auth/google/token', { token: idToken });
+    if (response.data.tokens) {
+        setTokens(response.data.tokens.access, response.data.tokens.refresh);
+    }
+    return response.data;
+};
+
 // Portfolio & Trading
 export const getPortfolio = async () => {
     const response = await api.get('/api/portfolio');

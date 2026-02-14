@@ -67,6 +67,8 @@ jobs:
             ALPACA_CLIENT_SECRET=${{ secrets.ALPACA_CLIENT_SECRET }}
             ALPACA_REDIRECT_URI=https://stg.alpaca.samaanai.com/alpaca/callback
             ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+            SESSION_COOKIE_DOMAIN=.stg.alpaca.samaanai.com
+            CSRF_COOKIE_DOMAIN=.stg.alpaca.samaanai.com
 
       - name: Show Backend URL
         run: |
@@ -103,6 +105,7 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_API_URL=https://api.stg.alpaca.samaanai.com \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             -t gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }} .
           docker push gcr.io/$GCP_PROJECT/$FRONTEND_SERVICE:${{ github.sha }}
 

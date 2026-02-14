@@ -25,11 +25,19 @@ python manage.py migrate --noinput || {
 }
 
 # Create Django Site entry (required by allauth, must exist before OAuth setup)
+# Use SITE_DOMAIN if set, otherwise extract domain from FRONTEND_URL, fallback to ALLOWED_HOSTS
 echo "🌐 Creating Django Site entry..."
 python manage.py shell -c "
 from django.contrib.sites.models import Site
 import os
-domain = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')[0]
+# Prefer explicit SITE_DOMAIN, then derive from FRONTEND_URL (strips protocol), then first ALLOWED_HOST
+domain = os.environ.get('SITE_DOMAIN', '')
+if not domain:
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    if frontend_url:
+        domain = frontend_url.replace('https://', '').replace('http://', '').split('/')[0]
+if not domain:
+    domain = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')[0].strip()
 site, created = Site.objects.get_or_create(id=1, defaults={'domain': domain, 'name': 'Alpaca Trading SaaS'})
 if not created and domain and site.domain != domain:
     site.domain = domain

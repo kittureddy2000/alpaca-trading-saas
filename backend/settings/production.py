@@ -20,8 +20,8 @@ def _check_secret_key():
 
 
 # Allowed hosts from environment plus hardcoded Cloud Run domains
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+# Allowed hosts from environment plus hardcoded Cloud Run domains
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').replace(',', ' ').split() if host.strip()]
 
 # Always include Cloud Run domains for alpaca-trading-saas
 CLOUD_RUN_HOSTS = [
@@ -99,11 +99,15 @@ if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = 'Lax'  # Required for OAuth redirects
+SESSION_COOKIE_NAME = 'sessionid_v2'  # Avoid conflict with old host-only cookies
+SESSION_COOKIE_SAMESITE = 'None'  # Allow cookie to be sent/set during cross-site redirects
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', '.alpaca.samaanai.com')
+SESSION_SAVE_EVERY_REQUEST = True  # Ensure session is saved on every request
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Database sessions for Cloud Run persistence
 CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = 'Lax'  # Required for OAuth redirects
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', '.alpaca.samaanai.com')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -114,6 +118,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://alpaca.samaanai.com',
     'https://api.alpaca.samaanai.com',
     'https://stg.alpaca.samaanai.com',
+    'https://api.stg.alpaca.samaanai.com',
     'https://*.run.app',
     'https://accounts.google.com',  # Google OAuth callback
 ]

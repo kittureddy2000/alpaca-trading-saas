@@ -3,6 +3,7 @@
 Supports email/password and Google OAuth authentication.
 """
 
+import os
 import re
 import logging
 from django.conf import settings
@@ -272,12 +273,20 @@ class GoogleLoginCallbackView(APIView):
             )
 
         try:
-            # Get Google client ID from settings
-            google_settings = getattr(settings, 'SOCIALACCOUNT_PROVIDERS', {}).get('google', {})
-            client_id = google_settings.get('APP', {}).get('client_id', '')
+            # Get Google client ID - try env var first, then database SocialApp
+            client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
 
             if not client_id:
-                logger.error("Google client ID not configured")
+                try:
+                    from allauth.socialaccount.models import SocialApp
+                    app = SocialApp.objects.filter(provider='google').first()
+                    if app:
+                        client_id = app.client_id
+                except Exception:
+                    pass
+
+            if not client_id:
+                logger.error("Google client ID not configured in env or database")
                 return Response(
                     {'error': 'Google OAuth not configured'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
