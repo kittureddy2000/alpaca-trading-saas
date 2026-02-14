@@ -58,15 +58,12 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_NAME=alpaca_database
             INSTANCE_CONNECTION_NAME=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db
-            ALLOWED_HOSTS=alpaca-api-staging-hdp6ioqupa-uw.a.run.app,api.stg.alpaca.samaanai.com
+            ALLOWED_HOSTS=api.stg.alpaca.samaanai.com
             FRONTEND_URL=https://stg.alpaca.samaanai.com
-            CORS_ALLOWED_ORIGINS=https://alpaca-dashboard-staging-362270100637.us-west1.run.app,https://stg.alpaca.samaanai.com
-            CSRF_TRUSTED_ORIGINS=https://alpaca-dashboard-staging-362270100637.us-west1.run.app,https://stg.alpaca.samaanai.com
             ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
             ALPACA_CLIENT_ID=${{ secrets.ALPACA_CLIENT_ID }}
             ALPACA_CLIENT_SECRET=${{ secrets.ALPACA_CLIENT_SECRET }}
             ALPACA_REDIRECT_URI=https://stg.alpaca.samaanai.com/alpaca/callback
-            ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
             SESSION_COOKIE_DOMAIN=.stg.alpaca.samaanai.com
             CSRF_COOKIE_DOMAIN=.stg.alpaca.samaanai.com
 

@@ -20,7 +20,6 @@ def _check_secret_key():
 
 
 # Allowed hosts from environment plus hardcoded Cloud Run domains
-# Allowed hosts from environment plus hardcoded Cloud Run domains
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').replace(',', ' ').split() if host.strip()]
 
 # Always include Cloud Run domains for alpaca-trading-saas
@@ -28,6 +27,7 @@ CLOUD_RUN_HOSTS = [
     'alpaca.samaanai.com',
     'api.alpaca.samaanai.com',
     'stg.alpaca.samaanai.com',
+    'api.stg.alpaca.samaanai.com',
     '.run.app',  # Wildcard for all Cloud Run
 ]
 for host in CLOUD_RUN_HOSTS:
@@ -83,6 +83,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://alpaca.samaanai.com',
     'https://api.alpaca.samaanai.com',
     'https://stg.alpaca.samaanai.com',
+    'https://api.stg.alpaca.samaanai.com',
 ]
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGIN_REGEXES = [
