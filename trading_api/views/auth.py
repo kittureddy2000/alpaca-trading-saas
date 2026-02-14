@@ -13,6 +13,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -54,6 +55,7 @@ class RegisterView(APIView):
     """Register a new user with email and password."""
 
     permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]  # Exclude SessionAuthentication to avoid CSRF
 
     def post(self, request):
         try:
@@ -125,6 +127,7 @@ class LoginView(APIView):
     """User login endpoint."""
 
     permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]  # Exclude SessionAuthentication to avoid CSRF
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
@@ -171,6 +174,7 @@ class LogoutView(APIView):
     """User logout endpoint."""
 
     permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]  # Exclude SessionAuthentication to avoid CSRF
 
     def post(self, request):
         refresh_token = request.data.get('refresh')
@@ -221,6 +225,7 @@ class GoogleCallbackView(APIView):
     """Handle Google OAuth callback from allauth redirect flow."""
 
     permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]  # Exclude SessionAuthentication to avoid CSRF
 
     def get(self, request):
         """
@@ -262,6 +267,7 @@ class GoogleLoginCallbackView(APIView):
     """
 
     permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]  # Exclude SessionAuthentication to avoid CSRF
 
     def post(self, request):
         token = request.data.get('token')
