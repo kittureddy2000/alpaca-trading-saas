@@ -540,20 +540,6 @@ class OptionChainView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-
-        # Check subscription for option chain
-        try:
-            has_access = user.subscription.collar_calculator
-        except:
-            has_access = False
-
-        if not has_access:
-            return Response(
-                {'error': 'Option chain requires Pro subscription'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         symbol = request.query_params.get('symbol', 'AAPL').upper()
         strike = request.query_params.get('strike')
         option_type = request.query_params.get('type', 'call').lower()
@@ -616,20 +602,6 @@ class CollarStrategyView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-
-        # Check subscription
-        try:
-            has_access = user.subscription.collar_calculator
-        except:
-            has_access = False
-
-        if not has_access:
-            return Response(
-                {'error': 'Collar calculator requires Pro subscription'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         symbol = request.query_params.get('symbol', 'AAPL').upper()
         upside_pct = float(request.query_params.get('upside_pct', 5))
 
