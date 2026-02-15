@@ -865,18 +865,9 @@ function SettingsPage({ subscription }) {
 
   return (
     <div className="page-container">
-      <h1>Trading Settings</h1>
-
-      {!subscription?.custom_settings && (
-        <div className="settings-locked-banner">
-          <div className="locked-icon">🔒</div>
-          <div className="locked-content">
-            <h3>Pro Feature Locked</h3>
-            <p>Upgrade to Pro or Enterprise to customize your AI trading strategy.</p>
-          </div>
-          <button className="btn-upgrade" onClick={() => window.location.href = '/billing'}>Upgrade Now</button>
-        </div>
-      )}
+      <div className="dash-label">SETTINGS</div>
+      <h1 className="dash-title">Agent Configuration</h1>
+      <p className="dash-subtitle">Update runtime controls and technical indicator usage for LLM analysis.</p>
 
       {message && (
         <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
@@ -884,155 +875,95 @@ function SettingsPage({ subscription }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className={`settings-form ${!subscription?.custom_settings ? 'disabled' : ''}`}>
+      <form onSubmit={handleSubmit} className="settings-form">
 
-        {/* Trading Strategy */}
+        {/* Trading Controls — 3 column grid */}
         <div className="settings-section">
-          <h2>Strategy Configuration</h2>
-          <div className="form-group">
-            <label>Trading Strategy</label>
-            <select name="strategy" value={formData.strategy} onChange={handleChange} disabled={!subscription?.custom_settings}>
-              <option value="balanced">Balanced (Recommended)</option>
-              <option value="momentum">Momentum (Aggressive)</option>
-              <option value="mean_reversion">Mean Reversion</option>
-              <option value="contrarian">Contrarian</option>
-            </select>
-            <p className="help-text">Determines the overall risk profile and trade frequency.</p>
-          </div>
-
-          <div className="form-row">
+          <div className="card-label">TRADING CONTROLS</div>
+          <h2>Agent Parameters</h2>
+          <div className="params-grid">
             <div className="form-group">
-              <label>Analysis Interval (Minutes)</label>
+              <label>Analysis Interval (min)</label>
               <input
                 type="number"
                 name="analysis_interval_minutes"
                 value={formData.analysis_interval_minutes}
                 onChange={handleChange}
                 min="1" max="1440"
-                disabled={!subscription?.custom_settings}
               />
             </div>
             <div className="form-group">
-              <label>Min Confidence (%)</label>
-              <input
-                type="number"
-                name="min_confidence"
-                value={formData.min_confidence}
-                onChange={handleChange}
-                step="0.05" min="0.5" max="0.99"
-                disabled={!subscription?.custom_settings}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* AI Configuration */}
-        <div className="settings-section">
-          <h2>AI Agent Configuration</h2>
-          <p className="section-desc">Select which technical indicators the AI should consider.</p>
-          <div className="indicators-grid">
-            {Object.keys(formData.active_indicators || {}).map(ind => (
-              <div key={ind} className="indicator-toggle">
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    checked={formData.active_indicators[ind]}
-                    onChange={() => handleIndicatorToggle(ind)}
-                    disabled={!subscription?.custom_settings}
-                  />
-                  <span className="slider round"></span>
-                </label>
-                <span className="toggle-label">{ind}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Risk Management */}
-        <div className="settings-section">
-          <h2>Risk Management</h2>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Max Position Size (%)</label>
+              <label>Max Position %</label>
               <input
                 type="number"
                 name="max_position_pct"
                 value={formData.max_position_pct}
                 onChange={handleChange}
                 step="0.01" min="0.01" max="1.0"
-                disabled={!subscription?.custom_settings}
               />
             </div>
             <div className="form-group">
-              <label>Max Daily Loss (%)</label>
+              <label>Max Daily Loss %</label>
               <input
                 type="number"
                 name="max_daily_loss_pct"
                 value={formData.max_daily_loss_pct}
                 onChange={handleChange}
                 step="0.01" min="0.01" max="0.5"
-                disabled={!subscription?.custom_settings}
               />
             </div>
-          </div>
-          <div className="form-row">
             <div className="form-group">
-              <label>Stop Loss (%)</label>
+              <label>Min Confidence %</label>
+              <input
+                type="number"
+                name="min_confidence"
+                value={formData.min_confidence}
+                onChange={handleChange}
+                step="0.05" min="0.5" max="0.99"
+              />
+            </div>
+            <div className="form-group">
+              <label>Stop Loss %</label>
               <input
                 type="number"
                 name="stop_loss_pct"
                 value={formData.stop_loss_pct}
                 onChange={handleChange}
                 step="0.01" min="0.01" max="0.5"
-                disabled={!subscription?.custom_settings}
               />
             </div>
             <div className="form-group">
-              <label>Take Profit (%)</label>
+              <label>Take Profit %</label>
               <input
                 type="number"
                 name="take_profit_pct"
                 value={formData.take_profit_pct}
                 onChange={handleChange}
                 step="0.01" min="0.01" max="1.0"
-                disabled={!subscription?.custom_settings}
               />
             </div>
           </div>
         </div>
 
-        {/* Notifications */}
+        {/* Technical Indicators — full-width rows */}
         <div className="settings-section">
-          <h2>Notifications</h2>
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="email_daily_summary"
-                checked={formData.email_daily_summary}
-                onChange={handleChange}
-                disabled={!subscription?.custom_settings}
-              />
-              Email Daily Summary
-            </label>
-          </div>
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="email_trade_alerts"
-                checked={formData.email_trade_alerts}
-                onChange={handleChange}
-                disabled={!subscription?.custom_settings}
-              />
-              Email Trade Alerts
-            </label>
+          <div className="card-label">TECHNICAL INDICATORS</div>
+          <h2>Enable / Disable Signals</h2>
+          <div className="indicator-rows">
+            {Object.keys(formData.active_indicators || {}).map(ind => (
+              <div className="indicator-row" key={ind} onClick={() => handleIndicatorToggle(ind)}>
+                <span className="indicator-name">{ind}</span>
+                <span className={`indicator-status ${formData.active_indicators[ind] ? 'on' : 'off'}`}>
+                  {formData.active_indicators[ind] ? 'ON' : 'OFF'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving || !subscription?.custom_settings}>
-            {saving ? 'Saving...' : 'Save Configuration'}
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Settings'}
           </button>
         </div>
       </form>
@@ -1213,6 +1144,192 @@ function BillingPage() {
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// Operations Page Component
+// ============================================================
+function OperationsPage() {
+  const [alpacaStatus, setAlpacaStatus] = useState(null);
+  const [settings, setSettings] = useState(null);
+  const [trades, setTrades] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOpsData = async () => {
+    try {
+      const [statusRes, settingsRes, tradesRes] = await Promise.all([
+        getAlpacaStatus(),
+        getSettings(),
+        getTrades(1, 200),
+      ]);
+      setAlpacaStatus(statusRes);
+      setSettings(settingsRes.settings || settingsRes);
+      setTrades(tradesRes.trades || tradesRes || []);
+    } catch (err) {
+      console.error('Failed to fetch ops data:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { fetchOpsData(); }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOpsData();
+  };
+
+  // Today's stats
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTrades = trades.filter(t => t.created_at?.startsWith(today));
+  const todayFilled = todayTrades.filter(t => (t.status || '').toLowerCase() === 'filled');
+  const todayErrors = todayTrades.filter(t => ['error', 'rejected', 'canceled'].includes((t.status || '').toLowerCase()));
+
+  // Daily logs for last 14 days
+  const dailyLogs = [...Array(14)].map((_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (13 - i));
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayTrades = trades.filter(t => t.created_at?.startsWith(dateStr));
+    return {
+      date: dateStr,
+      trades: dayTrades.length,
+      filled: dayTrades.filter(t => (t.status || '').toLowerCase() === 'filled').length,
+      errors: dayTrades.filter(t => ['error', 'rejected', 'canceled'].includes((t.status || '').toLowerCase())).length,
+    };
+  });
+
+  // Indicators
+  const activeIndicators = Object.entries(settings?.active_indicators || {}).filter(([, v]) => v).map(([k]) => k);
+  const inactiveIndicators = Object.entries(settings?.active_indicators || {}).filter(([, v]) => !v).map(([k]) => k);
+
+  if (loading) return <div className="loading">Loading operations data...</div>;
+
+  return (
+    <div className="ops-page">
+      <div className="ops-header-row">
+        <div>
+          <div className="dash-label">OPERATIONS MONITOR</div>
+          <h2 className="dash-title">System Health and Daily Activity</h2>
+          <p className="dash-subtitle">Verify trade execution, broker connectivity, and agent reliability.</p>
+        </div>
+        <div className="ops-header-actions">
+          <button className="btn-ops" onClick={handleRefresh} disabled={refreshing}>
+            {refreshing ? 'Refreshing...' : '🔄 Refresh Ops'}
+          </button>
+        </div>
+      </div>
+
+      {/* Two cards side by side */}
+      <div className="ops-grid">
+        {/* Today's Execution */}
+        <div className="ops-card">
+          <div className="card-label">TODAY</div>
+          <h2>Execution</h2>
+          <div className="ops-stat-row">
+            <span>Trades Executed</span>
+            <span className="ops-stat-value">{todayTrades.length}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Trades Filled</span>
+            <span className="ops-stat-value">{todayFilled.length}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Errors / Rejected</span>
+            <span className="ops-stat-value">{todayErrors.length}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Total Trades (All Time)</span>
+            <span className="ops-stat-value">{trades.length}</span>
+          </div>
+        </div>
+
+        {/* Health Checks */}
+        <div className="ops-card">
+          <div className="card-label">HEALTH CHECKS</div>
+          <h2>Connections</h2>
+          <div className="ops-stat-row">
+            <span>Alpaca API</span>
+            <span className={`ops-health-value ${alpacaStatus?.connected ? 'healthy' : 'error'}`}>
+              {alpacaStatus?.connected ? 'Healthy' : 'Disconnected'}
+            </span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Account Mode</span>
+            <span className="ops-stat-value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Account Status</span>
+            <span className={`ops-health-value ${alpacaStatus?.connected ? 'healthy' : 'error'}`}>
+              {alpacaStatus?.connected ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Trading Enabled</span>
+            <span className="ops-stat-value">{alpacaStatus?.connected ? 'Yes' : 'No'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Effective Settings */}
+      <div className="ops-card ops-full-width">
+        <div className="card-label">EFFECTIVE SETTINGS</div>
+        <h2>Applied at Runtime</h2>
+        <div className="ops-effective-grid">
+          <div className="ops-effective-item">
+            <span className="label">Interval</span>
+            <span className="value">{settings?.analysis_interval_minutes || 15} min</span>
+          </div>
+          <div className="ops-effective-item">
+            <span className="label">Min Confidence</span>
+            <span className="value">{Math.round((settings?.min_confidence || 0.7) * 100)}%</span>
+          </div>
+          <div className="ops-effective-item">
+            <span className="label">Max Position</span>
+            <span className="value">{Math.round((settings?.max_position_pct || 0.1) * 100)}%</span>
+          </div>
+          <div className="ops-effective-item">
+            <span className="label">Max Daily Loss</span>
+            <span className="value">{Math.round((settings?.max_daily_loss_pct || 0.03) * 100)}%</span>
+          </div>
+        </div>
+        <div className="ops-indicators-info">
+          <p><strong>Indicators ON:</strong> {activeIndicators.length > 0 ? activeIndicators.join(', ').toLowerCase() : 'None'}</p>
+          <p><strong>Indicators OFF:</strong> {inactiveIndicators.length > 0 ? inactiveIndicators.join(', ').toLowerCase() : 'None'}</p>
+        </div>
+      </div>
+
+      {/* Daily Logs */}
+      <div className="ops-card ops-full-width">
+        <div className="card-label">DAILY LOGS</div>
+        <h2>Last 14 Days</h2>
+        <div className="ops-table-scroll">
+          <table className="ops-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Trades</th>
+                <th>Filled</th>
+                <th>Errors</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyLogs.map((log) => (
+                <tr key={log.date}>
+                  <td>{log.date}</td>
+                  <td>{log.trades}</td>
+                  <td>{log.filled}</td>
+                  <td className={log.errors > 0 ? 'negative' : ''}>{log.errors}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -1692,6 +1809,12 @@ function App() {
         >
           Collar Strategy
         </button>
+        <button
+          className={`nav-tab ${currentPage === 'operations' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('operations')}
+        >
+          Operations
+        </button>
         <div className="nav-spacer"></div>
         <button
           className={`nav-tab ${currentPage === 'alpaca' ? 'active' : ''}`}
@@ -1725,14 +1848,32 @@ function App() {
                 Real-time portfolio tracking, risk management, and trade execution powered by AI.
               </p>
             </div>
-            <div className="dash-status-card">
-              <div className="dash-status-label">BROKER STATUS</div>
-              <div className="dash-status-value">
-                <span className={`dash-status-dot ${market?.is_open ? 'active' : ''}`}></span>
-                {market?.is_open ? 'Market Open' : 'Market Closed'}
+            <div className="dash-broker-card">
+              <div className="card-label">BROKER STATUS</div>
+              <div className="dash-broker-status">
+                <span className={`risk-dot ${alpacaStatus?.connected ? 'low' : 'medium'}`}></span>
+                <span>{market?.is_open ? 'Market Open' : 'Market Closed'}</span>
               </div>
-              <div className="dash-status-detail">
+              <div className="dash-broker-detail">
                 {portfolio?.positions?.length || 0} positions &middot; {formatCurrency(portfolio?.account?.portfolio_value || 0)}
+              </div>
+              <div className="dash-broker-stats">
+                <div className="dash-broker-stat">
+                  <span className="label">Connection</span>
+                  <span className="value">{alpacaStatus?.connected ? 'Connected' : 'Disconnected'}</span>
+                </div>
+                <div className="dash-broker-stat">
+                  <span className="label">Mode</span>
+                  <span className="value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
+                </div>
+                <div className="dash-broker-stat">
+                  <span className="label">Subscription</span>
+                  <span className="value">{subscription?.tier?.toUpperCase() || 'FREE'}</span>
+                </div>
+                <div className="dash-broker-stat">
+                  <span className="label">Trading</span>
+                  <span className="value">{subscription?.live_trading_enabled ? 'Enabled' : 'Disabled'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1762,40 +1903,6 @@ function App() {
                   <span className={`value ${dailyChange >= 0 ? 'positive' : 'negative'}`}>
                     {formatCurrency(dailyChange)} ({formatPercent(dailyChangePct)})
                   </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Broker Card */}
-            <div className="card risk-card">
-              <div className="card-label">BROKER</div>
-              <h2>Alpaca Connection</h2>
-              <div className="risk-level">
-                <span className={`risk-dot ${alpacaStatus?.connected ? 'low' : 'medium'}`}></span>
-                <span className="risk-text">{alpacaStatus?.connected ? 'Connected' : 'Not Connected'}</span>
-              </div>
-              {!alpacaStatus?.connected && (
-                <div className="connection-help">
-                  Connect your Alpaca account to see live portfolio data.
-                  <button className="btn-link-action" onClick={() => setCurrentPage('alpaca')}>Connect Now &rarr;</button>
-                </div>
-              )}
-              <div className="risk-stats">
-                <div className="stat">
-                  <span className="label">Mode</span>
-                  <span className="value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
-                </div>
-                <div className="stat">
-                  <span className="label">Subscription</span>
-                  <span className="value">{subscription?.tier?.toUpperCase() || 'FREE'}</span>
-                </div>
-                <div className="stat">
-                  <span className="label">Live Trading</span>
-                  <span className="value">{subscription?.live_trading_enabled ? 'Enabled' : 'Disabled'}</span>
-                </div>
-                <div className="stat">
-                  <span className="label">Strategy</span>
-                  <span className="value">{userSettings?.strategy || 'balanced'}</span>
                 </div>
               </div>
             </div>
@@ -1952,6 +2059,7 @@ function App() {
       )}
       {currentPage === 'options' && <OptionChainPage />}
       {currentPage === 'collar' && <CollarStrategyPage />}
+      {currentPage === 'operations' && <OperationsPage />}
       {currentPage === 'alpaca' && <AlpacaConnectPage subscription={subscription} />}
       {currentPage === 'settings' && <SettingsPage subscription={subscription} />}
       {currentPage === 'billing' && <BillingPage />}

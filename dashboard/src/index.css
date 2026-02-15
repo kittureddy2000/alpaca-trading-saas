@@ -291,7 +291,7 @@ body {
 
 /* Portfolio Card */
 .portfolio-card {
-  grid-column: span 4;
+  grid-column: span 5;
   background: linear-gradient(145deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 15, 0.9));
 }
 
@@ -365,7 +365,7 @@ body {
 
 /* Watchlist Card */
 .watchlist-card {
-  grid-column: span 8;
+  grid-column: span 12;
 }
 
 .watchlist-table {
@@ -429,7 +429,7 @@ body {
 
 /* Positions Card */
 .positions-card {
-  grid-column: span 6;
+  grid-column: span 7;
 }
 
 /* Trades Card */
@@ -2331,13 +2331,394 @@ input:checked+.slider:before {
 }
 
 /* ============================================================
-   Responsive Overrides for Settings & Billing
+   Dashboard Broker Card (Hero Row)
    ============================================================ */
+.dash-broker-card {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  padding: 20px 28px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.dash-broker-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.dash-broker-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.dash-broker-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dash-broker-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.dash-broker-stat .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-broker-stat .value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ============================================================
+   Settings Redesign — Params Grid & Indicator Rows
+   ============================================================ */
+.settings-page-redesign .settings-form {
+  max-width: 100%;
+}
+
+.params-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.params-grid .form-group {
+  margin-bottom: 0;
+}
+
+.params-grid .form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.params-grid .form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.params-grid .form-group input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 255, 0.1);
+}
+
+.indicator-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.indicator-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.indicator-row:hover {
+  background: rgba(0, 242, 255, 0.03);
+  border-color: rgba(0, 242, 255, 0.15);
+}
+
+.indicator-name {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.indicator-status {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.indicator-status.on {
+  color: var(--accent-cyan);
+  background: rgba(0, 242, 255, 0.1);
+  border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.indicator-status.off {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+/* ============================================================
+   Operations Page
+   ============================================================ */
+.ops-page {
+  animation: fadeIn 0.4s ease-out;
+  padding: 0 32px 40px;
+}
+
+.ops-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.ops-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+.btn-ops {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--accent-cyan), #00a8ff);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.btn-ops:hover {
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.btn-ops:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ops-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.ops-card {
+  background: linear-gradient(145deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 15, 0.9));
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+
+.ops-card h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.ops-full-width {
+  margin-bottom: 24px;
+}
+
+.ops-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.ops-stat-row:last-child {
+  border-bottom: none;
+}
+
+.ops-stat-value {
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.ops-health-value {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.ops-health-value.healthy {
+  color: var(--accent-green);
+  background: rgba(0, 255, 157, 0.1);
+}
+
+.ops-health-value.error {
+  color: var(--accent-red);
+  background: rgba(255, 42, 109, 0.1);
+}
+
+.ops-effective-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ops-effective-item {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ops-effective-item .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ops-effective-item .value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ops-indicators-info {
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.ops-indicators-info strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ops-table-scroll {
+  overflow-x: auto;
+}
+
+.ops-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-size: 13px;
+}
+
+.ops-table thead th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ops-table tbody tr {
+  background: rgba(0, 0, 0, 0.15);
+  transition: background 0.2s;
+}
+
+.ops-table tbody tr:hover {
+  background: rgba(0, 242, 255, 0.03);
+}
+
+.ops-table tbody td {
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ops-table tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ============================================================
+   Responsive Overrides
+   ============================================================ */
+@media (max-width: 1200px) {
+  .ops-effective-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .params-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .pricing-grid {
     grid-template-columns: 1fr;
     max-width: 400px;
     margin: 0 auto;
+  }
+
+  .ops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-effective-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-broker-card {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .portfolio-card,
+  .positions-card,
+  .watchlist-card,
+  .trades-card {
+    grid-column: span 12 !important;
   }
 }
 
@@ -2354,5 +2735,32 @@ input:checked+.slider:before {
   .form-row {
     flex-direction: column;
     gap: 0;
+  }
+
+  .dash-header-row {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .dash-broker-card {
+    max-width: none;
+  }
+
+  .ops-header-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ops-page {
+    padding: 0 16px 32px;
+  }
+
+  .params-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-effective-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
