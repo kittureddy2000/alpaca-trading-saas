@@ -237,12 +237,12 @@ DEFAULT_TRADING_CONFIG = {
 # Subscription Tier Limits
 SUBSCRIPTION_TIERS = {
     'free': {
-        'max_watchlist_size': 5,
-        'live_trading_enabled': False,
-        'api_access_enabled': False,
-        'advanced_indicators': False,
-        'collar_calculator': False,
-        'custom_settings': False,
+        'max_watchlist_size': 500,
+        'live_trading_enabled': True,
+        'api_access_enabled': True,
+        'advanced_indicators': True,
+        'collar_calculator': True,
+        'custom_settings': True,
     },
     'pro': {
         'max_watchlist_size': 100,

@@ -322,16 +322,11 @@ class WatchlistView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check subscription limit
-        try:
-            max_size = user.subscription.max_watchlist_size
-        except:
-            max_size = 5
-
+        # Watchlist size check (generous limit for all users)
         current_count = WatchlistItem.objects.filter(user=user).count()
-        if current_count >= max_size:
+        if current_count >= 500:
             return Response(
-                {'error': f'Watchlist limit reached ({max_size}). Upgrade to add more.'},
+                {'error': 'Watchlist limit reached (500).'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -407,11 +402,7 @@ class IndicatorsView(APIView):
     def get(self, request):
         user = request.user
 
-        # Check subscription for advanced indicators
-        try:
-            advanced = user.subscription.advanced_indicators
-        except:
-            advanced = False
+        advanced = True  # All indicators available to all users
 
         symbols = WatchlistItem.get_user_symbols(user)[:10]
         indicators = []

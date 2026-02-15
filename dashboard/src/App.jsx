@@ -624,12 +624,6 @@ function AlpacaConnectPage({ subscription }) {
       return;
     }
 
-    // Check subscription for live trading
-    if (!formData.paper && !subscription?.live_trading_enabled) {
-      setError('Live trading requires a Pro or Enterprise subscription. Please upgrade or use paper trading.');
-      return;
-    }
-
     setConnecting(true);
     setError('');
     setSuccess('');
@@ -750,9 +744,6 @@ function AlpacaConnectPage({ subscription }) {
                     onChange={(e) => setFormData({ ...formData, paper: e.target.checked })}
                   />
                   Paper Trading Mode
-                  {!subscription?.live_trading_enabled && (
-                    <span className="upgrade-hint">(Live trading requires Pro subscription)</span>
-                  )}
                 </label>
               </div>
               <button type="submit" className="btn-connect" disabled={connecting}>
@@ -1867,12 +1858,12 @@ function App() {
                   <span className="value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
                 </div>
                 <div className="dash-broker-stat">
-                  <span className="label">Subscription</span>
-                  <span className="value">{subscription?.tier?.toUpperCase() || 'FREE'}</span>
+                  <span className="label">Buying Power</span>
+                  <span className="value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
                 </div>
                 <div className="dash-broker-stat">
-                  <span className="label">Trading</span>
-                  <span className="value">{subscription?.live_trading_enabled ? 'Enabled' : 'Disabled'}</span>
+                  <span className="label">Day Trades</span>
+                  <span className="value">{portfolio?.account?.daytrade_count || 0}</span>
                 </div>
               </div>
             </div>

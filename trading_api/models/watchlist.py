@@ -38,13 +38,7 @@ class WatchlistItem(models.Model):
         if symbols is None:
             symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
 
-        # Check subscription limit
-        try:
-            max_size = user.subscription.max_watchlist_size
-        except:
-            max_size = 5
-
-        symbols = symbols[:max_size]
+        symbols = symbols[:500]  # Generous limit for all users
 
         for symbol in symbols:
             cls.objects.get_or_create(user=user, symbol=symbol)
