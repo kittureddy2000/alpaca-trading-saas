@@ -20,17 +20,11 @@ class UserSettingsView(APIView):
         """Get user's trading settings."""
         user = request.user
 
-        # Check if user can customize settings (Pro+)
-        try:
-            can_customize = user.subscription.custom_settings
-        except:
-            can_customize = False
-
         # Get or create settings
         settings_obj = UserSettings.get_or_create_for_user(user)
 
         return Response({
-            'can_customize': can_customize,
+            'can_customize': True,
             'settings': {
                 'strategy': settings_obj.strategy,
                 'analysis_interval_minutes': settings_obj.analysis_interval_minutes,
@@ -49,18 +43,6 @@ class UserSettingsView(APIView):
     def put(self, request):
         """Update user's trading settings."""
         user = request.user
-
-        # Check if user can customize settings (Pro+)
-        try:
-            can_customize = user.subscription.custom_settings
-        except:
-            can_customize = False
-
-        if not can_customize:
-            return Response(
-                {'error': 'Custom settings require Pro subscription'},
-                status=status.HTTP_403_FORBIDDEN
-            )
 
         settings_obj = UserSettings.get_or_create_for_user(user)
 
