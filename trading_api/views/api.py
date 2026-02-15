@@ -568,16 +568,22 @@ class OptionChainView(APIView):
                     exp_date = datetime.strptime(exp, '%Y-%m-%d')
                     days = (exp_date - datetime.now()).days
 
+                    last_price_val = float(closest['lastPrice'])
+                    premium_pct = round(last_price_val / current_price * 100, 2) if current_price > 0 else 0
+                    annualized_pct = round(premium_pct / max(days, 1) * 365, 2) if current_price > 0 else 0
+
                     options_data.append({
                         'expiration': exp,
                         'days_to_expiry': days,
                         'strike': float(closest['strike']),
-                        'last_price': float(closest['lastPrice']),
+                        'last_price': last_price_val,
                         'bid': float(closest['bid']),
                         'ask': float(closest['ask']),
                         'volume': int(closest['volume']) if closest['volume'] else 0,
                         'open_interest': int(closest['openInterest']) if closest['openInterest'] else 0,
                         'implied_volatility': float(closest['impliedVolatility']) * 100,
+                        'premium_pct': premium_pct,
+                        'annualized_pct': annualized_pct,
                     })
                 except Exception as e:
                     logger.warning(f"Failed to get options for {exp}: {e}")

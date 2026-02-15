@@ -116,6 +116,8 @@ function OptionChainPage() {
     iv: opt.implied_volatility,
     price: opt.last_price,
     days: opt.days_to_expiry,
+    premPct: opt.premium_pct,
+    annPct: opt.annualized_pct,
   })) || [];
 
   // Custom tooltip for chart
@@ -132,6 +134,14 @@ function OptionChainPage() {
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-dot" style={{ background: '#4da6ff' }}></span>
           Price: ${d?.price?.toFixed(2)}
+        </div>
+        <div className="chart-tooltip-row">
+          <span className="chart-tooltip-dot" style={{ background: '#00ff88' }}></span>
+          Prem: {d?.premPct?.toFixed(2)}%
+        </div>
+        <div className="chart-tooltip-row">
+          <span className="chart-tooltip-dot" style={{ background: '#bd00ff' }}></span>
+          Ann: {d?.annPct?.toFixed(2)}%
         </div>
         <div className="chart-tooltip-row dim">{d?.days} days to expiry</div>
       </div>
@@ -223,7 +233,7 @@ function OptionChainPage() {
           <div className="oc-grid">
             {/* IV + Price Trend Chart */}
             <div className="oc-card">
-              <h3>IV + Price Trend</h3>
+              <h3>IV + Price + Premium Trend</h3>
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
                   <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -277,6 +287,16 @@ function OptionChainPage() {
                       dot={{ fill: '#00f2ff', r: 3, strokeWidth: 0 }}
                       activeDot={{ r: 6, stroke: '#00f2ff', strokeWidth: 0, fill: '#00f2ff', filter: 'drop-shadow(0 0 8px rgba(0, 242, 255, 0.5))' }}
                     />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="premPct"
+                      stroke="#00ff88"
+                      strokeWidth={2}
+                      name="Premium (%)"
+                      dot={{ fill: '#00ff88', r: 3, strokeWidth: 0 }}
+                      activeDot={{ r: 6, stroke: '#00ff88', strokeWidth: 0, fill: '#00ff88', filter: 'drop-shadow(0 0 8px rgba(0, 255, 136, 0.5))' }}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -307,6 +327,8 @@ function OptionChainPage() {
                       <SortTh label="Vol" sortKey="volume" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
                       <SortTh label="OI" sortKey="open_interest" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
                       <SortTh label="IV %" sortKey="implied_volatility" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
+                      <SortTh label="Prem %" sortKey="premium_pct" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
+                      <SortTh label="Ann %" sortKey="annualized_pct" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
                       <SortTh label={'\u0394'} sortKey="delta" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
                       <SortTh label={'\u0393'} sortKey="gamma" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
                       <SortTh label={'\u0398'} sortKey="theta" currentKey={ocSortKey} currentDir={ocSortDir} onSort={ocHandleSort} />
@@ -316,7 +338,7 @@ function OptionChainPage() {
                   <tbody>
                     {sortedOptions.length === 0 ? (
                       <tr>
-                        <td colSpan="12" className="oc-empty">No options found for this strike</td>
+                        <td colSpan="14" className="oc-empty">No options found for this strike</td>
                       </tr>
                     ) : (
                       sortedOptions.map((opt, i) => (
@@ -329,6 +351,8 @@ function OptionChainPage() {
                           <td>{opt.volume.toLocaleString()}</td>
                           <td>{opt.open_interest.toLocaleString()}</td>
                           <td className="iv-cell">{opt.implied_volatility.toFixed(1)}%</td>
+                          <td className="prem-cell">{opt.premium_pct?.toFixed(2)}%</td>
+                          <td className="ann-cell">{opt.annualized_pct?.toFixed(2)}%</td>
                           <td className={`greek ${(opt.delta ?? 0) >= 0 ? 'pos' : 'neg'}`}>
                             {opt.delta != null ? opt.delta.toFixed(3) : '--'}
                           </td>
