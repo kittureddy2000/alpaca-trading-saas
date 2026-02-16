@@ -109,7 +109,7 @@ jobs:
               --cpu=1 \
               --task-timeout=300s \
               --max-retries=1 \
-              --add-cloudsql-instances=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db \
+              --set-cloudsql-instances=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db \
               --set-env-vars="DJANGO_SETTINGS_MODULE=backend.settings.production" \
               --set-env-vars="DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" \
               --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
@@ -131,7 +131,7 @@ jobs:
               --cpu=1 \
               --task-timeout=300s \
               --max-retries=1 \
-              --add-cloudsql-instances=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db \
+              --set-cloudsql-instances=samaanai-stg-1009-124126:us-west1:samaanai-backend-staging-db \
               --set-env-vars="DJANGO_SETTINGS_MODULE=backend.settings.production" \
               --set-env-vars="DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" \
               --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
