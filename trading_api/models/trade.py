@@ -21,6 +21,7 @@ class Trade(models.Model):
         ('partially_filled', 'Partially Filled'),
         ('canceled', 'Canceled'),
         ('rejected', 'Rejected'),
+        ('hold', 'Hold'),
     ]
 
     user = models.ForeignKey(

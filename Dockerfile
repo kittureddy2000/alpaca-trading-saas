@@ -30,8 +30,8 @@ RUN pip install --no-cache /wheels/*
 # Copy application code
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.sh
+# Make entrypoint scripts executable
+RUN chmod +x /app/entrypoint.sh /app/agent-entrypoint.sh
 
 # Collect static files (build-time, may fail without env vars - that's OK)
 RUN python manage.py collectstatic --noinput --settings=backend.settings.base 2>/dev/null || echo "Static files will be collected at runtime"
