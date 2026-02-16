@@ -2001,17 +2001,6 @@ function App() {
       {/* Page Content */}
       {currentPage === 'dashboard' && (
         <>
-          {/* Dashboard Hero Header */}
-          <div className="dash-header-row">
-            <div>
-              <div className="dash-label">TRADING DASHBOARD</div>
-              <h2 className="dash-title">Your Portfolio at a Glance</h2>
-              <p className="dash-subtitle">
-                Real-time portfolio tracking, risk management, and trade execution powered by AI.
-              </p>
-            </div>
-          </div>
-
           <div className="main-grid">
             {/* Portfolio Card */}
             <div className="card portfolio-card">
@@ -2021,14 +2010,10 @@ function App() {
                 <span className="label">Total Value</span>
                 <span className="value">{formatCurrency(portfolio?.account?.portfolio_value || 0)}</span>
               </div>
-              <div className="portfolio-stats">
+              <div className="portfolio-stats portfolio-stats-3col">
                 <div className="stat">
                   <span className="label">Cash</span>
                   <span className="value">{formatCurrency(portfolio?.account?.cash || 0)}</span>
-                </div>
-                <div className="stat">
-                  <span className="label">Buying Power</span>
-                  <span className="value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
                 </div>
                 <div className="stat">
                   <span className="label">Overall P&L</span>
@@ -2042,13 +2027,33 @@ function App() {
                     {formatCurrency(dailyChange)} ({formatPercent(dailyChangePct)})
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Risk Status Card */}
+            <div className="card risk-status-card">
+              <div className="card-label">RISK</div>
+              <h2>Risk Status</h2>
+              <div className="risk-status-level">
+                <span className={`risk-dot ${Math.abs(totalPLPercent) < 3 ? 'low' : Math.abs(totalPLPercent) < 7 ? 'medium' : 'high'}`}></span>
+                <span className="risk-level-text">{Math.abs(totalPLPercent) < 3 ? 'LOW' : Math.abs(totalPLPercent) < 7 ? 'MEDIUM' : 'HIGH'}</span>
+              </div>
+              <div className="portfolio-stats">
                 <div className="stat">
-                  <span className="label">Positions</span>
-                  <span className="value">{portfolio?.positions?.length || 0}</span>
+                  <span className="label">Daily Trades</span>
+                  <span className="value">{portfolio?.account?.daytrade_count || 0}</span>
                 </div>
                 <div className="stat">
-                  <span className="label">Day Trades</span>
-                  <span className="value">{portfolio?.account?.daytrade_count || 0}</span>
+                  <span className="label">Daily Loss</span>
+                  <span className={`value ${dailyChange < 0 ? 'negative' : ''}`}>{formatCurrency(Math.abs(dailyChange))}</span>
+                </div>
+                <div className="stat">
+                  <span className="label">Max Position</span>
+                  <span className="value">{formatCurrency((portfolio?.account?.portfolio_value || 0) * (userSettings?.max_position_pct || 0.10))}</span>
+                </div>
+                <div className="stat">
+                  <span className="label">Buying Power</span>
+                  <span className="value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
                 </div>
               </div>
             </div>

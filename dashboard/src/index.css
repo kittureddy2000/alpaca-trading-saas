@@ -429,12 +429,51 @@ body {
 
 /* Positions Card */
 .positions-card {
-  grid-column: span 7;
+  grid-column: span 12;
 }
 
 /* Trades Card */
 .trades-card {
   grid-column: span 12;
+}
+
+/* Risk Status Card */
+.risk-status-card {
+  grid-column: span 7;
+  background: linear-gradient(145deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 15, 0.9));
+}
+
+.risk-status-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.risk-level-text {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.risk-dot.low {
+  background: var(--accent-green);
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.4);
+}
+
+.risk-dot.medium {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 10px rgba(255, 200, 0, 0.4);
+}
+
+.risk-dot.high {
+  background: var(--accent-red);
+  box-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
+}
+
+/* Portfolio 3-col stats layout */
+.portfolio-stats-3col {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 /* Tables General */
@@ -2821,8 +2860,13 @@ input:checked+.slider:before {
   .portfolio-card,
   .positions-card,
   .watchlist-card,
-  .trades-card {
+  .trades-card,
+  .risk-status-card {
     grid-column: span 12 !important;
+  }
+
+  .portfolio-stats-3col {
+    grid-template-columns: 1fr !important;
   }
 }
 
