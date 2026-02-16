@@ -1148,19 +1148,32 @@ function OperationsPage() {
   const [alpacaStatus, setAlpacaStatus] = useState(null);
   const [settings, setSettings] = useState(null);
   const [trades, setTrades] = useState([]);
+  const [portfolio, setPortfolio] = useState(null);
+  const [indicators, setIndicators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedTrade, setExpandedTrade] = useState(null);
 
   const fetchOpsData = async () => {
     try {
-      const [statusRes, settingsRes, tradesRes] = await Promise.all([
+      const [statusRes, settingsRes, tradesRes, portfolioRes] = await Promise.all([
         getAlpacaStatus(),
         getSettings(),
         getTrades(1, 200),
+        getPortfolio(),
       ]);
       setAlpacaStatus(statusRes);
       setSettings(settingsRes.settings || settingsRes);
       setTrades(tradesRes.trades || tradesRes || []);
+      setPortfolio(portfolioRes);
+
+      // Fetch indicators separately (non-blocking)
+      try {
+        const indRes = await getIndicators();
+        setIndicators(indRes.indicators || []);
+      } catch (e) {
+        console.error('Failed to fetch indicators:', e);
+      }
     } catch (err) {
       console.error('Failed to fetch ops data:', err);
     } finally {
@@ -1195,9 +1208,12 @@ function OperationsPage() {
     };
   });
 
-  // Indicators
+  // Indicators from settings
   const activeIndicators = Object.entries(settings?.active_indicators || {}).filter(([, v]) => v).map(([k]) => k);
   const inactiveIndicators = Object.entries(settings?.active_indicators || {}).filter(([, v]) => !v).map(([k]) => k);
+
+  // Recent trades with AI reasoning (last 20)
+  const recentDecisions = trades.slice(0, 20);
 
   if (loading) return <div className="loading">Loading operations data...</div>;
 
@@ -1207,17 +1223,41 @@ function OperationsPage() {
         <div>
           <div className="dash-label">OPERATIONS MONITOR</div>
           <h2 className="dash-title">System Health and Daily Activity</h2>
-          <p className="dash-subtitle">Verify trade execution, broker connectivity, and agent reliability.</p>
+          <p className="dash-subtitle">Verify trade execution, broker connectivity, indicator signals, and agent decisions.</p>
         </div>
         <div className="ops-header-actions">
           <button className="btn-ops" onClick={handleRefresh} disabled={refreshing}>
-            {refreshing ? 'Refreshing...' : '🔄 Refresh Ops'}
+            {refreshing ? 'Refreshing...' : '🔄 Refresh'}
           </button>
         </div>
       </div>
 
-      {/* Two cards side by side */}
-      <div className="ops-grid">
+      {/* Row 1: Broker Status + Today Execution + Health Checks */}
+      <div className="ops-grid ops-grid-3">
+        {/* Broker Status (moved from dashboard) */}
+        <div className="ops-card">
+          <div className="card-label">BROKER STATUS</div>
+          <h2>Alpaca</h2>
+          <div className="ops-stat-row">
+            <span>Connection</span>
+            <span className={`ops-health-value ${alpacaStatus?.connected ? 'healthy' : 'error'}`}>
+              {alpacaStatus?.connected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Account Mode</span>
+            <span className="ops-stat-value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Buying Power</span>
+            <span className="ops-stat-value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Positions</span>
+            <span className="ops-stat-value">{portfolio?.positions?.length || 0}</span>
+          </div>
+        </div>
+
         {/* Today's Execution */}
         <div className="ops-card">
           <div className="card-label">TODAY</div>
@@ -1232,10 +1272,10 @@ function OperationsPage() {
           </div>
           <div className="ops-stat-row">
             <span>Errors / Rejected</span>
-            <span className="ops-stat-value">{todayErrors.length}</span>
+            <span className={`ops-stat-value ${todayErrors.length > 0 ? 'negative' : ''}`}>{todayErrors.length}</span>
           </div>
           <div className="ops-stat-row">
-            <span>Total Trades (All Time)</span>
+            <span>All-Time Trades</span>
             <span className="ops-stat-value">{trades.length}</span>
           </div>
         </div>
@@ -1243,26 +1283,30 @@ function OperationsPage() {
         {/* Health Checks */}
         <div className="ops-card">
           <div className="card-label">HEALTH CHECKS</div>
-          <h2>Connections</h2>
+          <h2>System</h2>
           <div className="ops-stat-row">
             <span>Alpaca API</span>
             <span className={`ops-health-value ${alpacaStatus?.connected ? 'healthy' : 'error'}`}>
-              {alpacaStatus?.connected ? 'Healthy' : 'Disconnected'}
+              {alpacaStatus?.connected ? 'Healthy' : 'Down'}
             </span>
           </div>
           <div className="ops-stat-row">
-            <span>Account Mode</span>
-            <span className="ops-stat-value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
-          </div>
-          <div className="ops-stat-row">
-            <span>Account Status</span>
+            <span>Market Data</span>
             <span className={`ops-health-value ${alpacaStatus?.connected ? 'healthy' : 'error'}`}>
-              {alpacaStatus?.connected ? 'Active' : 'Inactive'}
+              {alpacaStatus?.connected ? 'Live' : 'Offline'}
             </span>
           </div>
           <div className="ops-stat-row">
-            <span>Trading Enabled</span>
-            <span className="ops-stat-value">{alpacaStatus?.connected ? 'Yes' : 'No'}</span>
+            <span>Indicators</span>
+            <span className={`ops-health-value ${activeIndicators.length > 0 ? 'healthy' : 'error'}`}>
+              {activeIndicators.length} Active
+            </span>
+          </div>
+          <div className="ops-stat-row">
+            <span>Settings Sync</span>
+            <span className={`ops-health-value ${settings ? 'healthy' : 'error'}`}>
+              {settings ? 'OK' : 'Error'}
+            </span>
           </div>
         </div>
       </div>
@@ -1288,10 +1332,137 @@ function OperationsPage() {
             <span className="label">Max Daily Loss</span>
             <span className="value">{Math.round((settings?.max_daily_loss_pct || 0.03) * 100)}%</span>
           </div>
+          <div className="ops-effective-item">
+            <span className="label">Stop Loss</span>
+            <span className="value">{Math.round((settings?.stop_loss_pct || 0.05) * 100)}%</span>
+          </div>
+          <div className="ops-effective-item">
+            <span className="label">Take Profit</span>
+            <span className="value">{Math.round((settings?.take_profit_pct || 0.10) * 100)}%</span>
+          </div>
         </div>
         <div className="ops-indicators-info">
-          <p><strong>Indicators ON:</strong> {activeIndicators.length > 0 ? activeIndicators.join(', ').toLowerCase() : 'None'}</p>
-          <p><strong>Indicators OFF:</strong> {inactiveIndicators.length > 0 ? inactiveIndicators.join(', ').toLowerCase() : 'None'}</p>
+          <p><strong>Indicators ON:</strong> {activeIndicators.length > 0 ? activeIndicators.map(i => i.toLowerCase()).join(', ') : 'None configured'}</p>
+          <p><strong>Indicators OFF:</strong> {inactiveIndicators.length > 0 ? inactiveIndicators.map(i => i.toLowerCase()).join(', ') : 'None'}</p>
+        </div>
+      </div>
+
+      {/* Live Indicator Signals */}
+      {indicators.length > 0 && (
+        <div className="ops-card ops-full-width">
+          <div className="card-label">LIVE INDICATOR SIGNALS</div>
+          <h2>Current Technical Analysis</h2>
+          <p className="dash-subtitle" style={{ marginBottom: '16px' }}>
+            These are the actual signals the agent uses to make trade decisions.
+          </p>
+          <div className="ops-table-scroll">
+            <table className="ops-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Price</th>
+                  <th>RSI</th>
+                  <th>RSI Signal</th>
+                  <th>MACD</th>
+                  <th>MACD Trend</th>
+                  <th>Overall</th>
+                </tr>
+              </thead>
+              <tbody>
+                {indicators.map((ind) => (
+                  <tr key={ind.symbol}>
+                    <td className="symbol-highlight">{ind.symbol}</td>
+                    <td>{ind.price ? formatCurrency(ind.price) : '--'}</td>
+                    <td>{ind.rsi ? ind.rsi.toFixed(1) : '--'}</td>
+                    <td>
+                      <span className={`ops-signal-badge ${(ind.rsi_signal || '').toLowerCase()}`}>
+                        {ind.rsi_signal || 'N/A'}
+                      </span>
+                    </td>
+                    <td>{ind.macd ? ind.macd.toFixed(4) : '--'}</td>
+                    <td>
+                      <span className={`ops-signal-badge ${(ind.macd_trend || '').toLowerCase()}`}>
+                        {ind.macd_trend || 'N/A'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`ops-signal-badge overall ${(ind.overall_signal || '').toLowerCase()}`}>
+                        {ind.overall_signal || 'NEUTRAL'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Decision Audit Trail */}
+      <div className="ops-card ops-full-width">
+        <div className="card-label">DECISION AUDIT TRAIL</div>
+        <h2>Agent Trade Reasoning</h2>
+        <p className="dash-subtitle" style={{ marginBottom: '16px' }}>
+          Shows how the agent used indicators and settings to decide each trade. Click a row to see reasoning.
+        </p>
+        <div className="ops-table-scroll">
+          <table className="ops-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Action</th>
+                <th>Symbol</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Confidence</th>
+                <th>Strategy</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentDecisions.length === 0 ? (
+                <tr><td colSpan="8" className="empty-state">No trades yet. The agent will log decisions during market hours.</td></tr>
+              ) : (
+                recentDecisions.map((trade, idx) => (
+                  <React.Fragment key={idx}>
+                    <tr
+                      className={`ops-decision-row ${expandedTrade === idx ? 'expanded' : ''} ${trade.reasoning ? 'has-reasoning' : ''}`}
+                      onClick={() => setExpandedTrade(expandedTrade === idx ? null : idx)}
+                      style={{ cursor: trade.reasoning ? 'pointer' : 'default' }}
+                    >
+                      <td>{trade.created_at ? new Date(trade.created_at).toLocaleString() : '--'}</td>
+                      <td className={`action-${(trade.side || trade.action || '').toLowerCase()}`}>
+                        {trade.side || trade.action || '--'}
+                      </td>
+                      <td className="symbol-highlight">{trade.symbol}</td>
+                      <td>{trade.qty || trade.quantity || trade.filled_qty || 0}</td>
+                      <td>{trade.filled_avg_price || trade.filled_price ? formatCurrency(trade.filled_avg_price || trade.filled_price) : '--'}</td>
+                      <td>
+                        {trade.confidence != null ? (
+                          <span className={`ops-confidence ${trade.confidence >= 0.7 ? 'high' : trade.confidence >= 0.4 ? 'medium' : 'low'}`}>
+                            {Math.round(trade.confidence * 100)}%
+                          </span>
+                        ) : (
+                          <span className="ops-confidence none">--</span>
+                        )}
+                      </td>
+                      <td>{trade.strategy || '--'}</td>
+                      <td><span className={`status-badge ${(trade.status || '').toLowerCase()}`}>{trade.status}</span></td>
+                    </tr>
+                    {expandedTrade === idx && trade.reasoning && (
+                      <tr className="ops-reasoning-row">
+                        <td colSpan="8">
+                          <div className="ops-reasoning-content">
+                            <strong>Agent Reasoning:</strong> {trade.reasoning}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1839,34 +2010,6 @@ function App() {
                 Real-time portfolio tracking, risk management, and trade execution powered by AI.
               </p>
             </div>
-            <div className="dash-broker-card">
-              <div className="card-label">BROKER STATUS</div>
-              <div className="dash-broker-status">
-                <span className={`risk-dot ${alpacaStatus?.connected ? 'low' : 'medium'}`}></span>
-                <span>{market?.is_open ? 'Market Open' : 'Market Closed'}</span>
-              </div>
-              <div className="dash-broker-detail">
-                {portfolio?.positions?.length || 0} positions &middot; {formatCurrency(portfolio?.account?.portfolio_value || 0)}
-              </div>
-              <div className="dash-broker-stats">
-                <div className="dash-broker-stat">
-                  <span className="label">Connection</span>
-                  <span className="value">{alpacaStatus?.connected ? 'Connected' : 'Disconnected'}</span>
-                </div>
-                <div className="dash-broker-stat">
-                  <span className="label">Mode</span>
-                  <span className="value">{alpacaStatus?.is_paper ? 'Paper' : 'Live'}</span>
-                </div>
-                <div className="dash-broker-stat">
-                  <span className="label">Buying Power</span>
-                  <span className="value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
-                </div>
-                <div className="dash-broker-stat">
-                  <span className="label">Day Trades</span>
-                  <span className="value">{portfolio?.account?.daytrade_count || 0}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="main-grid">
@@ -1884,6 +2027,10 @@ function App() {
                   <span className="value">{formatCurrency(portfolio?.account?.cash || 0)}</span>
                 </div>
                 <div className="stat">
+                  <span className="label">Buying Power</span>
+                  <span className="value">{formatCurrency(portfolio?.account?.buying_power || 0)}</span>
+                </div>
+                <div className="stat">
                   <span className="label">Overall P&L</span>
                   <span className={`value ${totalUnrealizedPL >= 0 ? 'positive' : 'negative'}`}>
                     {formatCurrency(totalUnrealizedPL)} ({formatPercent(totalPLPercent)})
@@ -1894,6 +2041,14 @@ function App() {
                   <span className={`value ${dailyChange >= 0 ? 'positive' : 'negative'}`}>
                     {formatCurrency(dailyChange)} ({formatPercent(dailyChangePct)})
                   </span>
+                </div>
+                <div className="stat">
+                  <span className="label">Positions</span>
+                  <span className="value">{portfolio?.positions?.length || 0}</span>
+                </div>
+                <div className="stat">
+                  <span className="label">Day Trades</span>
+                  <span className="value">{portfolio?.account?.daytrade_count || 0}</span>
                 </div>
               </div>
             </div>

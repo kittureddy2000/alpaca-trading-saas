@@ -182,8 +182,18 @@ class TradesView(APIView):
             except Exception as e:
                 logger.error(f"Failed to get trades from Alpaca: {e}")
 
-        # Get from database
+        # Build lookup of DB trade AI analysis data (confidence, reasoning, strategy)
         db_trades = Trade.objects.filter(user=user)[:200]
+        db_lookup = {t.order_id: t for t in db_trades}
+
+        # Enrich Alpaca trades with AI analysis from DB
+        for trade in trades:
+            db_trade = db_lookup.get(trade.get('id'))
+            if db_trade:
+                trade['confidence'] = db_trade.confidence
+                trade['reasoning'] = db_trade.reasoning
+                trade['strategy'] = db_trade.strategy
+
         alpaca_ids = {t.get('id') for t in trades}
 
         for t in db_trades:
@@ -199,6 +209,9 @@ class TradesView(APIView):
                     'limit_price': float(t.limit_price) if t.limit_price else None,
                     'filled_avg_price': float(t.filled_avg_price) if t.filled_avg_price else None,
                     'created_at': t.created_at.isoformat() if t.created_at else None,
+                    'confidence': t.confidence,
+                    'reasoning': t.reasoning,
+                    'strategy': t.strategy,
                 })
 
         # Sort and paginate

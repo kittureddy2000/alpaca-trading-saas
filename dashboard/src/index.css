@@ -434,7 +434,7 @@ body {
 
 /* Trades Card */
 .trades-card {
-  grid-column: span 6;
+  grid-column: span 12;
 }
 
 /* Tables General */
@@ -2598,7 +2598,7 @@ input:checked+.slider:before {
 
 .ops-effective-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -2681,11 +2681,119 @@ input:checked+.slider:before {
   font-weight: 500;
 }
 
+/* 3-column ops grid */
+.ops-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Signal badges for indicator table */
+.ops-signal-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.ops-signal-badge.bullish,
+.ops-signal-badge.oversold {
+  color: var(--accent-green);
+  background: rgba(0, 255, 157, 0.1);
+}
+
+.ops-signal-badge.bearish,
+.ops-signal-badge.overbought {
+  color: var(--accent-red);
+  background: rgba(255, 42, 109, 0.1);
+}
+
+.ops-signal-badge.neutral,
+.ops-signal-badge.n\/a {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ops-signal-badge.overall {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+}
+
+/* Confidence badge */
+.ops-confidence {
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.ops-confidence.high {
+  color: var(--accent-green);
+  background: rgba(0, 255, 157, 0.1);
+}
+
+.ops-confidence.medium {
+  color: var(--accent-yellow);
+  background: rgba(255, 200, 0, 0.1);
+}
+
+.ops-confidence.low {
+  color: var(--accent-red);
+  background: rgba(255, 42, 109, 0.1);
+}
+
+.ops-confidence.none {
+  color: var(--text-muted);
+}
+
+/* Decision audit trail rows */
+.ops-decision-row.has-reasoning {
+  cursor: pointer;
+}
+
+.ops-decision-row.has-reasoning:hover {
+  background: rgba(0, 242, 255, 0.05) !important;
+}
+
+.ops-decision-row.expanded {
+  background: rgba(0, 242, 255, 0.04) !important;
+  border-bottom: none;
+}
+
+.ops-reasoning-row td {
+  padding: 0 16px 16px !important;
+  background: rgba(0, 242, 255, 0.02);
+}
+
+.ops-reasoning-content {
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 242, 255, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+}
+
+.ops-reasoning-content strong {
+  color: var(--accent-cyan);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
 /* ============================================================
    Responsive Overrides
    ============================================================ */
 @media (max-width: 1200px) {
   .ops-effective-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ops-grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -2701,17 +2809,13 @@ input:checked+.slider:before {
     margin: 0 auto;
   }
 
-  .ops-grid {
+  .ops-grid,
+  .ops-grid-3 {
     grid-template-columns: 1fr;
   }
 
   .ops-effective-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dash-broker-card {
-    min-width: auto;
-    max-width: none;
   }
 
   .portfolio-card,
