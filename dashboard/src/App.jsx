@@ -1856,13 +1856,11 @@ function App() {
 
   const dailyChange = portfolio?.performance?.daily_change || 0;
   const dailyChangePct = portfolio?.performance?.daily_change_pct || 0;
-  const totalUnrealizedPL = (portfolio?.positions || []).reduce(
-    (sum, pos) => sum + (pos.unrealized_pl || 0), 0
-  );
-  const totalCostBasis = (portfolio?.positions || []).reduce(
-    (sum, pos) => sum + ((pos.avg_entry_price || 0) * (pos.qty || 0)), 0
-  );
-  const totalPLPercent = totalCostBasis > 0 ? (totalUnrealizedPL / totalCostBasis) * 100 : 0;
+  // Overall P&L = current portfolio value - initial capital (what you actually gained/lost)
+  const initialCapital = 100000;
+  const portfolioValue = parseFloat(portfolio?.account?.portfolio_value) || 0;
+  const totalUnrealizedPL = portfolioValue - initialCapital;
+  const totalPLPercent = initialCapital > 0 ? (totalUnrealizedPL / initialCapital) * 100 : 0;
 
   return (
     <div className="dashboard">
