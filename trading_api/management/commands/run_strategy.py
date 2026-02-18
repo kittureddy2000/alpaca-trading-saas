@@ -82,7 +82,7 @@ class Command(BaseCommand):
         # Verify connection
         try:
             account = service.get_account()
-            if not account or account.status != 'ACTIVE':
+            if not account or account.get('status') != 'ACTIVE':
                 return None
         except Exception:
             return None
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         positions = service.get_positions()
         has_position = False
         if positions:
-            has_position = any(p.symbol == symbol for p in positions)
+            has_position = any(p.get('symbol') == symbol for p in positions)
 
         # 2. Get Historical Data (200 bars for robust indicators)
         bars = service.get_bars(symbol, timeframe='1Min', limit=200)

@@ -102,7 +102,7 @@ class AlpacaService:
                 'connected': True,
                 'account_id': account.id,
                 'account_number': account.account_number,
-                'status': account.status,
+                'status': account.status.value if hasattr(account.status, 'value') else str(account.status),
                 'paper': self.paper,
             }
         except Exception as e:
@@ -119,7 +119,7 @@ class AlpacaService:
             return {
                 'id': account.id,
                 'account_number': account.account_number,
-                'status': account.status,
+                'status': account.status.value if hasattr(account.status, 'value') else str(account.status),
                 'cash': float(account.cash),
                 'buying_power': float(account.buying_power),
                 'portfolio_value': float(account.portfolio_value),

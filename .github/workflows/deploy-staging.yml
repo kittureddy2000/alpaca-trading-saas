@@ -149,7 +149,7 @@ jobs:
       - name: Setup Cloud Scheduler (Market Hours)
         run: |
           # Schedule: Every 15 min, Mon-Fri, 9:30 AM - 4:00 PM ET (6:30 AM - 1:00 PM PT)
-          # Cron: */15 6-12 * * 1-5 (PT) — covers 6:30am-12:45pm PT which is 9:30am-3:45pm ET
+          # Cron: */15 6-13 * * 1-5 (PT) — covers 6:00am-1:00pm PT = 9:00am-4:00pm ET
           SCHEDULER_NAME="${AGENT_JOB}-scheduler"
           SERVICE_ACCOUNT="${{ secrets.GCP_SA_EMAIL || '' }}"
 
@@ -166,7 +166,7 @@ jobs:
             echo "Updating existing scheduler..."
             gcloud scheduler jobs update http $SCHEDULER_NAME \
               --location=$GCP_REGION \
-              --schedule="*/15 6-12 * * 1-5" \
+              --schedule="*/15 6-13 * * 1-5" \
               --time-zone="America/Los_Angeles" \
               --uri="https://${GCP_REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${GCP_PROJECT}/jobs/${AGENT_JOB}:run" \
               --http-method=POST \
@@ -176,7 +176,7 @@ jobs:
             echo "Creating new scheduler..."
             gcloud scheduler jobs create http $SCHEDULER_NAME \
               --location=$GCP_REGION \
-              --schedule="*/15 6-12 * * 1-5" \
+              --schedule="*/15 6-13 * * 1-5" \
               --time-zone="America/Los_Angeles" \
               --uri="https://${GCP_REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${GCP_PROJECT}/jobs/${AGENT_JOB}:run" \
               --http-method=POST \
